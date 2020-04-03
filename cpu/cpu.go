@@ -83,7 +83,11 @@ func (cpu *CPU) Execute() {
 
 	// 8-bit ALU
 	case 0xaf:
-		cpu.XORn("A")
+		cpu.XORr8("A")
+
+	// Jumps
+	case 0x20:
+		cpu.JRccd8("NZ")
 
 	// CB-prefixed
 	case 0xcb:

@@ -1,5 +1,17 @@
 package cpu
 
+// d8  means immediate 8 bit data
+// d16 means immediate 16 bit data
+// r8  means 8 bit register
+// r16 means 16 bit register
+
+func testBit(b uint8, val uint8) bool {
+	if val>>b&1 == 1 {
+		return true
+	}
+	return false
+}
+
 func (cpu *CPU) setFlags(z, n, h, c uint8) {
 	var newFlag uint8 = 0
 	oldFlag := cpu.getReg8("F")
@@ -70,8 +82,8 @@ func (cpu *CPU) LDr16d16(reg string) {
 	cpu.setReg16(reg, nn)
 }
 
-// XORn exclusive OR n with register A, result in A
-func (cpu *CPU) XORn(reg string) {
+// XORr8 exclusive OR n with register A, result in A
+func (cpu *CPU) XORr8(reg string) {
 	var n uint8
 	if reg == "#" {
 		n = cpu.Fetch()
@@ -101,6 +113,19 @@ func (cpu *CPU) LDDmHLA() {
 	cpu.setReg16("HL", addr)
 }
 
+// JRccd8 if current condition is true, add n to current address and jump to it
+// n = one byte signed immediate value
+func (cpu *CPU) JRccd8(cc string) {
+	var n int8 = int8(cpu.Fetch())
+
+	switch cc {
+	case "NZ":
+		if !testBit(Z, cpu.getReg8("F")) {
+			cpu.pc = uint16(int32(cpu.pc) + int32(n))
+		}
+	}
+}
+
 ////////////////////////
 // CB prefixed
 
@@ -108,11 +133,17 @@ func (cpu *CPU) LDDmHLA() {
 func (cpu *CPU) BITbr8(b uint8, reg string) {
 	logger.Log("BIT %d, %s\n", b, reg)
 
-	val := cpu.getReg8(reg)
-
-	if 1<<b&val == 0 {
-		cpu.setFlags(SET, RESET, SET, NA)
+	var val byte
+	if reg == "(HL)" {
+		addr := cpu.getReg16("HL")
+		val = cpu.mmu.Read(addr)
 	} else {
+		val = cpu.getReg8(reg)
+	}
+
+	if testBit(b, val) {
 		cpu.setFlags(RESET, RESET, SET, NA)
+	} else {
+		cpu.setFlags(SET, RESET, SET, NA)
 	}
 }
