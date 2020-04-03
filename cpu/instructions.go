@@ -1,7 +1,5 @@
 package cpu
 
-import "fmt"
-
 func (cpu *CPU) setFlags(Z, N, H, C uint8) {
 	var newFlag uint8 = 0
 
@@ -15,28 +13,25 @@ func (cpu *CPU) setFlags(Z, N, H, C uint8) {
 
 // NOP do nothing
 func (cpu *CPU) NOP() {
-	fmt.Printf("NOP\n")
+	logger.Log("NOP\n")
 }
 
 // LDr8d8 put value d8 into r8
 func (cpu *CPU) LDr8d8(reg string) {
 	n := cpu.Fetch()
-	fmt.Printf("LD %s, %#02x\n", reg, n)
+	logger.Log("LD %s, %#02x\n", reg, n)
 
 	cpu.setReg8(reg, n)
 }
 
 // LDr8r8 put value reg2 into reg1
-func (cpu *CPU) LDr8r8(reg1 string, reg2 string) {
-	fmt.Printf("LD %s, %s\n", reg1, reg2)
+func (cpu *CPU) LDr8r8(reg1, reg2 string) {
+	logger.Log("LD %s, %s\n", reg1, reg2)
 
 	var val byte
 	if reg2 == "(HL)" {
-		// TODO read from memory
-		val = 0x00
 		addr := cpu.getReg16("HL")
-		fmt.Printf("read byte from address: %x", addr)
-		// val = cpu.mmu.Read(addr)
+		val = cpu.mmu.Read(addr)
 	} else {
 		val = cpu.getReg8(reg2)
 	}
@@ -50,7 +45,7 @@ func (cpu *CPU) LDr16d16(reg string) {
 	high := cpu.Fetch()
 
 	nn := uint16(high)<<8 | uint16(low)
-	fmt.Printf("LD %s, %#02x\n", reg, nn)
+	logger.Log("LD %s, %#02x\n", reg, nn)
 
 	cpu.setReg16(reg, nn)
 }
@@ -60,10 +55,10 @@ func (cpu *CPU) XORn(reg string) {
 	var n uint8
 	if reg == "#" {
 		n = cpu.Fetch()
-		fmt.Printf("XOR %#02x\n", n)
+		logger.Log("XOR %#02x\n", n)
 	} else {
 		n = cpu.getReg8(reg)
-		fmt.Printf("XOR %s\n", reg)
+		logger.Log("XOR %s\n", reg)
 	}
 
 	val := cpu.getReg8("A") ^ n
@@ -77,9 +72,11 @@ func (cpu *CPU) XORn(reg string) {
 
 // LDDmHLA put A into memory address HL. Decrement HL
 func (cpu *CPU) LDDmHLA() {
-	hl := cpu.getReg16("HL")
-	cpu.mmu.Write(hl, cpu.getReg8("A"))
+	logger.Log("LDD (HL), A\n")
 
-	hl--
-	cpu.setReg16("HL", hl)
+	addr := cpu.getReg16("HL")
+	cpu.mmu.Write(addr, cpu.getReg8("A"))
+
+	addr--
+	cpu.setReg16("HL", addr)
 }

@@ -3,7 +3,10 @@ package cpu
 import (
 	"fmt"
 	"gbemu/mmu"
+	"gbemu/utils"
 )
+
+var logger *utils.Logger = utils.NewLogger(true)
 
 func printByte(opcode byte) {
 	fmt.Printf("%#02x\n", opcode)
@@ -29,17 +32,6 @@ type CPU struct {
 
 	pc uint16 // program counter
 	sp uint16 // stack pointer
-}
-
-func (cpu *CPU) Demo() {
-	// cpu.LDr8d8("B", 10)
-	// printByte(cpu.getReg8("B"))
-	// cpu.setReg16("AF", 0x1234)
-	// printByte(cpu.getReg8("A"))
-	// printByte(cpu.getReg8("F"))
-	// cpu.LDr8r8("A", "(HL)")
-	// printWord(cpu.getReg16("AF"))
-	// printByte(cpu.mmu.Read(0))
 }
 
 // New return CPU
@@ -76,6 +68,8 @@ func (cpu *CPU) Execute() {
 	// 8-bit loads
 	case 0x06:
 		cpu.LDr8d8("B")
+	case 0x32:
+		cpu.LDDmHLA()
 
 	// 16-bit loads
 	case 0x01:

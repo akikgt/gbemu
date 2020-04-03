@@ -1,14 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"gbemu/cpu"
 	"gbemu/mmu"
 )
-
-func printOpcode(opcode byte) {
-	fmt.Printf("%#02x\n", opcode)
-}
 
 func main() {
 	mmu := mmu.New()
