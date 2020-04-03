@@ -28,41 +28,43 @@ type CPU struct {
 }
 
 func (cpu *CPU) Demo() {
-	cpu.setA(0x55)
-	printWord(cpu.getHL())
-	cpu.setBC(0x1234)
-	printByte(cpu.getB())
-	printByte(Z)
-	cpu.LDr8d8('B', 10)
-	printByte(cpu.getB())
+	cpu.LDr8d8("B", 10)
+	printByte(cpu.getReg8("B"))
+	cpu.setReg16("AF", 0x1234)
+	printByte(cpu.getReg8("A"))
+	printByte(cpu.getReg8("F"))
+	cpu.LDr8r8("A", "(HL)")
+	printWord(cpu.getReg16("AF"))
 }
 
+// New return CPU
 func New() *CPU {
 	cpu := &CPU{}
 
 	return cpu
 }
 
-// LD nn, n
-func (cpu *CPU) LDr8d8(reg byte, n byte) {
-	fmt.Printf("LD %c, %d\n", reg, n)
+// LDr8d8 put value d8 into r8
+func (cpu *CPU) LDr8d8(reg string, n byte) {
+	fmt.Printf("LD %s, %d\n", reg, n)
 
-	switch reg {
-	case 'B':
-		cpu.setB(n)
-	case 'C':
-		cpu.setC(n)
-	case 'D':
-		cpu.setD(n)
-	case 'E':
-		cpu.setE(n)
-	case 'H':
-		cpu.setH(n)
-	case 'L':
-		cpu.setL(n)
-	}
+	cpu.setReg8(reg, n)
 }
 
-// func (cpu *CPU) LDr8r8(reg1 byte, reg2 byte) {
+// LDr8r8 put value reg2 into reg1
+func (cpu *CPU) LDr8r8(reg1 string, reg2 string) {
+	fmt.Printf("LD %s, %s\n", reg1, reg2)
 
-// }
+	var val byte
+	if reg2 == "(HL)" {
+		// TODO read from memory
+		val = 0x00
+		addr := cpu.getReg16("HL")
+		fmt.Printf("read byte from address: %x", addr)
+		// val = cpu.mmu.Read(addr)
+	} else {
+		val = cpu.getReg8(reg2)
+	}
+
+	cpu.setReg8(reg1, val)
+}
