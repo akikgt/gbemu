@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"gbemu/cpu"
-	"os"
+	"gbemu/mmu"
 )
 
 func printOpcode(opcode byte) {
@@ -11,27 +11,14 @@ func printOpcode(opcode byte) {
 }
 
 func main() {
-	f, err := os.Open("sgb_bios.bin")
-	if err != nil {
-		fmt.Println("Cannot open a file")
-		os.Exit(1)
+	mmu := mmu.New()
+	cpu := cpu.New(mmu)
+	var breakPoint uint16 = 0x08
+
+	for {
+		if cpu.GetPC() >= breakPoint {
+			break
+		}
+		cpu.Execute()
 	}
-	defer f.Close()
-
-	// bios := make([]byte, 256)
-
-	// f.Read(bios)
-	// var pc uint16 = 0
-	// for {
-	// 	if pc > 30 {
-	// 		break
-	// 	}
-	// 	b := bios[pc]
-	// 	printOpcode(b)
-
-	// 	pc++
-	// }
-
-	cpu := cpu.New()
-	cpu.Demo()
 }

@@ -1,6 +1,9 @@
 package cpu
 
-import "fmt"
+import (
+	"fmt"
+	"gbemu/mmu"
+)
 
 func printByte(opcode byte) {
 	fmt.Printf("%#02x\n", opcode)
@@ -11,6 +14,7 @@ func printWord(opcode uint16) {
 }
 
 type CPU struct {
+	mmu   *mmu.MMU
 	clock int
 
 	// registers
@@ -28,43 +32,67 @@ type CPU struct {
 }
 
 func (cpu *CPU) Demo() {
-	cpu.LDr8d8("B", 10)
-	printByte(cpu.getReg8("B"))
-	cpu.setReg16("AF", 0x1234)
-	printByte(cpu.getReg8("A"))
-	printByte(cpu.getReg8("F"))
-	cpu.LDr8r8("A", "(HL)")
-	printWord(cpu.getReg16("AF"))
+	// cpu.LDr8d8("B", 10)
+	// printByte(cpu.getReg8("B"))
+	// cpu.setReg16("AF", 0x1234)
+	// printByte(cpu.getReg8("A"))
+	// printByte(cpu.getReg8("F"))
+	// cpu.LDr8r8("A", "(HL)")
+	// printWord(cpu.getReg16("AF"))
+	// printByte(cpu.mmu.Read(0))
 }
 
 // New return CPU
-func New() *CPU {
-	cpu := &CPU{}
-
+func New(mmu *mmu.MMU) *CPU {
+	cpu := &CPU{mmu: mmu}
 	return cpu
 }
 
-// LDr8d8 put value d8 into r8
-func (cpu *CPU) LDr8d8(reg string, n byte) {
-	fmt.Printf("LD %s, %d\n", reg, n)
-
-	cpu.setReg8(reg, n)
+func (cpu *CPU) Dump() {
+	fmt.Println("--------------------")
+	fmt.Printf("A: %#02x F: %#02x\n", cpu.a, cpu.f)
+	fmt.Printf("B: %#02x C: %#02x\n", cpu.b, cpu.c)
+	fmt.Printf("D: %#02x E: %#02x\n", cpu.d, cpu.e)
+	fmt.Printf("H: %#02x L: %#02x\n", cpu.h, cpu.l)
+	fmt.Printf("SP: %#02x\n", cpu.sp)
+	fmt.Printf("PC: %#02x\n", cpu.pc)
+	fmt.Println("--------------------")
 }
 
-// LDr8r8 put value reg2 into reg1
-func (cpu *CPU) LDr8r8(reg1 string, reg2 string) {
-	fmt.Printf("LD %s, %s\n", reg1, reg2)
+func (cpu *CPU) Fetch() uint8 {
+	res := cpu.mmu.Read(cpu.pc)
+	cpu.pc++
 
-	var val byte
-	if reg2 == "(HL)" {
-		// TODO read from memory
-		val = 0x00
-		addr := cpu.getReg16("HL")
-		fmt.Printf("read byte from address: %x", addr)
-		// val = cpu.mmu.Read(addr)
-	} else {
-		val = cpu.getReg8(reg2)
+	return res
+}
+
+func (cpu *CPU) Execute() {
+	opcode := cpu.Fetch()
+
+	switch opcode {
+	case 0x00:
+		cpu.NOP()
+
+	// 8-bit loads
+	case 0x06:
+		cpu.LDr8d8("B")
+
+	// 16-bit loads
+	case 0x01:
+		cpu.LDr16d16("BC")
+	case 0x11:
+		cpu.LDr16d16("DE")
+	case 0x21:
+		cpu.LDr16d16("HL")
+	case 0x31:
+		cpu.LDr16d16("SP")
+
+	// 8-bit ALU
+	case 0xaf:
+		cpu.XORn("A")
+	default:
+		fmt.Printf("unknown opcode: %#02x\n", opcode)
 	}
 
-	cpu.setReg8(reg1, val)
+	cpu.Dump() // for debug
 }

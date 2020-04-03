@@ -1,12 +1,17 @@
 package cpu
 
 // Flag register bits
-const (
-	Z = 7 // Zero Flag
-	N = 6 // Subtract Flag
-	H = 5 // Half Carry Flag
-	C = 4 // Carry Flag
-)
+// const (
+// 	Z = 7 // Zero Flag
+// 	N = 6 // Subtract Flag
+// 	H = 5 // Half Carry Flag
+// 	C = 4 // Carry Flag
+// )
+
+// GetPC returns current program counter
+func (cpu *CPU) GetPC() uint16 {
+	return cpu.pc
+}
 
 func (cpu *CPU) getReg8(reg string) byte {
 	switch reg {
@@ -61,6 +66,8 @@ func (cpu *CPU) getReg16(reg string) uint16 {
 		return uint16(cpu.d)<<8 | uint16(cpu.e)
 	case "HL":
 		return uint16(cpu.h)<<8 | uint16(cpu.l)
+	case "SP":
+		return cpu.sp
 	}
 	return 0
 }
@@ -79,5 +86,7 @@ func (cpu *CPU) setReg16(reg string, val uint16) {
 	case "HL":
 		cpu.h = byte(val >> 8 & 0xff)
 		cpu.l = byte(val & 0xff)
+	case "SP":
+		cpu.sp = val
 	}
 }
