@@ -1,12 +1,32 @@
 package cpu
 
-func (cpu *CPU) setFlags(Z, N, H, C uint8) {
+func (cpu *CPU) setFlags(z, n, h, c uint8) {
 	var newFlag uint8 = 0
+	oldFlag := cpu.getReg8("F")
 
-	newFlag |= Z << 7
-	newFlag |= N << 6
-	newFlag |= H << 5
-	newFlag |= C << 4
+	for b := Z; b >= C; b-- {
+		var status uint8
+
+		switch b {
+		case Z:
+			status = z
+		case N:
+			status = n
+		case H:
+			status = h
+		case C:
+			status = c
+		}
+
+		switch status {
+		case RESET:
+			newFlag &= ^(1 << b)
+		case SET:
+			newFlag |= 1 << b
+		case NA:
+			newFlag |= oldFlag & (1 << b)
+		}
+	}
 
 	cpu.setReg8("F", newFlag)
 }
@@ -79,4 +99,20 @@ func (cpu *CPU) LDDmHLA() {
 
 	addr--
 	cpu.setReg16("HL", addr)
+}
+
+////////////////////////
+// CB prefixed
+
+// BITbr8 test bit b in register r8
+func (cpu *CPU) BITbr8(b uint8, reg string) {
+	logger.Log("BIT %d, %s\n", b, reg)
+
+	val := cpu.getReg8(reg)
+
+	if 1<<b&val == 0 {
+		cpu.setFlags(SET, RESET, SET, NA)
+	} else {
+		cpu.setFlags(RESET, RESET, SET, NA)
+	}
 }

@@ -84,9 +84,24 @@ func (cpu *CPU) Execute() {
 	// 8-bit ALU
 	case 0xaf:
 		cpu.XORn("A")
+
+	// CB-prefixed
+	case 0xcb:
+		logger.Log("CB-prefixed\n")
+		cpu.CBPrefixed()
+
 	default:
-		fmt.Printf("unknown opcode: %#02x\n", opcode)
+		logger.Log("unknown opcode: %#02x\n", opcode)
 	}
 
 	cpu.Dump() // for debug
+}
+
+func (cpu *CPU) CBPrefixed() {
+	opcode := cpu.Fetch()
+
+	switch opcode {
+	case 0x7c:
+		cpu.BITbr8(7, "H")
+	}
 }

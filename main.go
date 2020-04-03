@@ -8,7 +8,7 @@ import (
 func main() {
 	mmu := mmu.New()
 	cpu := cpu.New(mmu)
-	var breakPoint uint16 = 0x08
+	var breakPoint uint16 = 0x0b
 
 	for {
 		if cpu.GetPC() >= breakPoint {

@@ -1,12 +1,18 @@
 package cpu
 
-// Flag register bits
-// const (
-// 	Z = 7 // Zero Flag
-// 	N = 6 // Subtract Flag
-// 	H = 5 // Half Carry Flag
-// 	C = 4 // Carry Flag
-// )
+// For flag register
+const (
+	// flag bit
+	Z = 7
+	N = 6
+	H = 5
+	C = 4
+
+	// flag affected type
+	RESET = 0
+	SET   = 1
+	NA    = 2
+)
 
 // GetPC returns current program counter
 func (cpu *CPU) GetPC() uint16 {
