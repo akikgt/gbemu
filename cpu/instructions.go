@@ -27,6 +27,20 @@ func checkCarry(a, b, c uint8) uint8 {
 	return RESET
 }
 
+func checkHalfBorrow(a, b, c uint8) uint8 {
+	if (a & 0xf) < (b&0xf + c) {
+		return RESET
+	}
+	return SET
+}
+
+func checkBorrow(a, b, c uint8) uint8 {
+	if a < b+c {
+		return RESET
+	}
+	return SET
+}
+
 func testBit(b uint8, val uint8) bool {
 	if val>>b&1 == 1 {
 		return true
