@@ -5,6 +5,7 @@ package cpu
 // s8  means signed immediate 8 bit data, which are added to pc
 // r8  means 8 bit register
 // r16 means 16 bit register
+// m*  means data in memory address *
 
 func testBit(b uint8, val uint8) bool {
 	if val>>b&1 == 1 {
@@ -18,12 +19,26 @@ func (cpu *CPU) NOP() {
 	logger.Log("NOP\n")
 }
 
+////////////////////////////////////////////////
+// Load
+
 // LDr8d8 put value d8 into r8
 func (cpu *CPU) LDr8d8(reg string) {
 	n := cpu.Fetch()
 	logger.Log("LD %s, %#02x\n", reg, n)
 
 	cpu.setReg8(reg, n)
+}
+
+// LDmHLd8 put value d8 into address HL
+func (cpu *CPU) LDmHLd8() {
+	n := cpu.Fetch()
+
+	addr := cpu.getReg16("HL")
+
+	cpu.mmu.Write(addr, n)
+
+	logger.Log("LD (HL), %#02x\n", n)
 }
 
 // LDr8r8 put value reg2 into reg1
@@ -69,15 +84,29 @@ func (cpu *CPU) LDmd16A() {
 	logger.Log("LD (%#02x), A\n", addr)
 }
 
-// LDDmHLA put A into memory address HL. Decrement HL
-func (cpu *CPU) LDDmHLA() {
-	logger.Log("LDD (HL), A\n")
+// LDAmd16 put value at address d16 into A
+func (cpu *CPU) LDAmd16() {
+	low := cpu.Fetch()
+	high := cpu.Fetch()
 
-	addr := cpu.getReg16("HL")
-	cpu.mmu.Write(addr, cpu.getReg8("A"))
+	addr := uint16(high)<<8 | uint16(low)
 
-	addr--
-	cpu.setReg16("HL", addr)
+	val := cpu.mmu.Read(addr)
+
+	cpu.setReg8("A", val)
+
+	logger.Log("LD A, (%#02x)\n", addr)
+}
+
+// LDmCA put A into address 0xff00 + register C
+func (cpu *CPU) LDmCA() {
+	logger.Log("LD (C), A")
+
+	val := cpu.getReg8("A")
+
+	addr := 0xff00 + uint16(cpu.getReg8("C"))
+
+	cpu.mmu.Write(addr, val)
 }
 
 // LDAmC put value at address 0xff00 + register C into A
@@ -102,17 +131,6 @@ func (cpu *CPU) LDHAmd8() {
 	logger.Log("LD A, (%#02x)\n", addr)
 }
 
-// LDmCA put A into address 0xff00 + register C
-func (cpu *CPU) LDmCA() {
-	logger.Log("LD (C), A")
-
-	val := cpu.getReg8("A")
-
-	addr := 0xff00 + uint16(cpu.getReg8("C"))
-
-	cpu.mmu.Write(addr, val)
-}
-
 // LDHmd8A put value A into address 0xff00 + d8
 func (cpu *CPU) LDHmd8A() {
 	addr := 0xff00 + uint16(cpu.Fetch())
@@ -120,6 +138,17 @@ func (cpu *CPU) LDHmd8A() {
 	cpu.mmu.Write(addr, cpu.getReg8("A"))
 
 	logger.Log("LD (%#02x), A\n", addr)
+}
+
+// LDDmHLA put A into memory address HL. Decrement HL
+func (cpu *CPU) LDDmHLA() {
+	logger.Log("LDD (HL), A\n")
+
+	addr := cpu.getReg16("HL")
+	cpu.mmu.Write(addr, cpu.getReg8("A"))
+
+	addr--
+	cpu.setReg16("HL", addr)
 }
 
 // LDr16d16 put value d16 into r16
@@ -161,7 +190,10 @@ func (cpu *CPU) JRccs8(cc string) {
 }
 
 ////////////////////////////////////////////////
-// Arithmetics
+// Arithmetic
+
+////////////////////////
+// 8-bit
 
 // XORr8 exclusive OR n with register A, result in A
 func (cpu *CPU) XORr8(reg string) {
@@ -188,6 +220,23 @@ func (cpu *CPU) XORr8(reg string) {
 	}
 
 	cpu.setReg8("A", val)
+}
+
+////////////////////////
+// 16-bit
+
+// INCr16 increment r16
+func (cpu *CPU) INCr16(reg string) {
+	cpu.setReg16(reg, cpu.getReg16(reg)+1)
+
+	logger.Log("INC %s\n", reg)
+}
+
+// DECr16 decrement r16
+func (cpu *CPU) DECr16(reg string) {
+	cpu.setReg16(reg, cpu.getReg16(reg)-1)
+
+	logger.Log("DEC %s\n", reg)
 }
 
 ////////////////////////////////////////////////

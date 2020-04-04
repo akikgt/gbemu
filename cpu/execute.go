@@ -147,6 +147,8 @@ func (cpu *CPU) Execute() {
 		cpu.LDHAmd8()
 	case 0xf2:
 		cpu.LDAmC()
+	case 0xfa:
+		cpu.LDAmd16()
 
 	// Put value into memory
 	case 0x02:
@@ -169,10 +171,14 @@ func (cpu *CPU) Execute() {
 		cpu.LDmr16r8("HL", "A")
 	case 0x32:
 		cpu.LDDmHLA()
+	case 0x36:
+		cpu.LDmHLd8()
 	case 0xe0:
 		cpu.LDHmd8A()
 	case 0xe2:
 		cpu.LDmCA()
+	case 0xea:
+		cpu.LDmd16A()
 
 	// 16-bit loads
 	case 0x01:
@@ -204,6 +210,26 @@ func (cpu *CPU) Execute() {
 		cpu.XORr8("A")
 	case 0xee:
 		cpu.XORr8("#")
+
+	// 16-bit ALU
+	// INC nn
+	case 0x03:
+		cpu.INCr16("BC")
+	case 0x13:
+		cpu.INCr16("DE")
+	case 0x23:
+		cpu.INCr16("HL")
+	case 0x33:
+		cpu.INCr16("SP")
+	// DEC nn
+	case 0x0B:
+		cpu.DECr16("BC")
+	case 0x1B:
+		cpu.DECr16("DE")
+	case 0x2B:
+		cpu.DECr16("HL")
+	case 0x3B:
+		cpu.DECr16("SP")
 
 	// Jumps
 	case 0x20:
