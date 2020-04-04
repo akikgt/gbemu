@@ -144,9 +144,9 @@ func (cpu *CPU) Execute() {
 	case 0x6e:
 		cpu.LDr8mr16("L", "HL")
 	case 0xf0:
-		cpu.LDHAd8()
+		cpu.LDHAmd8()
 	case 0xf2:
-		cpu.LDA0xff00C()
+		cpu.LDAmC()
 
 	// Put value into memory
 	case 0x02:
@@ -170,9 +170,9 @@ func (cpu *CPU) Execute() {
 	case 0x32:
 		cpu.LDDmHLA()
 	case 0xe0:
-		cpu.LDHd8A()
+		cpu.LDHmd8A()
 	case 0xe2:
-		cpu.LD0xff00CA()
+		cpu.LDmCA()
 
 	// 16-bit loads
 	case 0x01:

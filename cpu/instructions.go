@@ -80,8 +80,8 @@ func (cpu *CPU) LDDmHLA() {
 	cpu.setReg16("HL", addr)
 }
 
-// LDA0xff00C put value at address 0xff00 + register C into A
-func (cpu *CPU) LDA0xff00C() {
+// LDAmC put value at address 0xff00 + register C into A
+func (cpu *CPU) LDAmC() {
 	logger.Log("LD A, (C)")
 
 	addr := 0xff00 + uint16(cpu.getReg8("C"))
@@ -91,8 +91,8 @@ func (cpu *CPU) LDA0xff00C() {
 	cpu.setReg8("A", val)
 }
 
-// LDHAd8 put value at address 0xff00 + d8 into A
-func (cpu *CPU) LDHAd8() {
+// LDHAmd8 put value at address 0xff00 + d8 into A
+func (cpu *CPU) LDHAmd8() {
 	addr := 0xff00 + uint16(cpu.Fetch())
 
 	val := cpu.mmu.Read(addr)
@@ -102,8 +102,8 @@ func (cpu *CPU) LDHAd8() {
 	logger.Log("LD A, (%#02x)\n", addr)
 }
 
-// LD0xff00CA put A into address 0xff00 + register C
-func (cpu *CPU) LD0xff00CA() {
+// LDmCA put A into address 0xff00 + register C
+func (cpu *CPU) LDmCA() {
 	logger.Log("LD (C), A")
 
 	val := cpu.getReg8("A")
@@ -113,8 +113,8 @@ func (cpu *CPU) LD0xff00CA() {
 	cpu.mmu.Write(addr, val)
 }
 
-// LDHd8A put value A into address 0xff00 + d8
-func (cpu *CPU) LDHd8A() {
+// LDHmd8A put value A into address 0xff00 + d8
+func (cpu *CPU) LDHmd8A() {
 	addr := 0xff00 + uint16(cpu.Fetch())
 
 	cpu.mmu.Write(addr, cpu.getReg8("A"))
