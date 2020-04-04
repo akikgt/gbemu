@@ -9,7 +9,7 @@ import (
 func main() {
 	mmu := mmu.New()
 	cpu := cpu.New(mmu)
-	var breakPoint uint16 = 0x29
+	var breakPoint uint16 = 0xa0
 
 	for {
 		fmt.Printf("%#04x : ", cpu.GetPC())

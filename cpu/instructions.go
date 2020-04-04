@@ -116,10 +116,7 @@ func (cpu *CPU) LDmr16r8(reg1, reg2 string) {
 
 // LDmd16A put value A into address d16
 func (cpu *CPU) LDmd16A() {
-	low := cpu.Fetch()
-	high := cpu.Fetch()
-
-	addr := uint16(high)<<8 | uint16(low)
+	addr := cpu.FetchWord()
 
 	cpu.mmu.Write(addr, cpu.getReg8("A"))
 
@@ -128,10 +125,7 @@ func (cpu *CPU) LDmd16A() {
 
 // LDAmd16 put value at address d16 into A
 func (cpu *CPU) LDAmd16() {
-	low := cpu.Fetch()
-	high := cpu.Fetch()
-
-	addr := uint16(high)<<8 | uint16(low)
+	addr := cpu.FetchWord()
 
 	val := cpu.mmu.Read(addr)
 
@@ -223,10 +217,7 @@ func (cpu *CPU) LDDAmHL() {
 
 // LDr16d16 put value d16 into r16
 func (cpu *CPU) LDr16d16(reg string) {
-	low := cpu.Fetch()
-	high := cpu.Fetch()
-
-	nn := uint16(high)<<8 | uint16(low)
+	nn := cpu.FetchWord()
 
 	cpu.setReg16(reg, nn)
 
@@ -235,9 +226,7 @@ func (cpu *CPU) LDr16d16(reg string) {
 
 // LDmd16SP put SP at address d16
 func (cpu *CPU) LDmd16SP() {
-	low := cpu.Fetch()
-	high := cpu.Fetch()
-	addr := uint16(high)<<8 | uint16(low)
+	addr := cpu.FetchWord()
 
 	sp := cpu.getReg16("SP")
 
@@ -321,6 +310,29 @@ func (cpu *CPU) JRccs8(cc string) {
 }
 
 //======================================================================
+// Calls
+//======================================================================
+
+func (cpu *CPU) pushd16(d uint16) {
+	addr := cpu.getReg16("SP") - 2
+	cpu.setReg16("SP", addr)
+
+	cpu.mmu.WriteWord(addr, d)
+}
+
+// CALLd16 push address of next instruction onto stack
+// and then jump to address d16
+func (cpu *CPU) CALLd16() {
+	jumpTo := cpu.FetchWord()
+
+	cpu.pushd16(cpu.pc)
+
+	cpu.pc = jumpTo
+
+	logger.Log("CALL %#04x\n", jumpTo)
+}
+
+//======================================================================
 // Arithmetic
 //======================================================================
 
@@ -335,8 +347,7 @@ func (cpu *CPU) XORr8(reg string) {
 		n = cpu.Fetch()
 		logger.Log("XOR %#02x\n", n)
 	case "(HL)":
-		addr := cpu.getReg16(reg)
-		n = cpu.mmu.Read(addr)
+		n = cpu.mmu.Read(cpu.getReg16("HL"))
 		logger.Log("XOR %s\n", reg)
 	default:
 		n = cpu.getReg8(reg)
@@ -353,7 +364,12 @@ func (cpu *CPU) XORr8(reg string) {
 
 // INCr8 increment r8
 func (cpu *CPU) INCr8(reg string) {
-	n := cpu.getReg8(reg)
+	var n uint8
+	if reg == "(HL)" {
+		n = cpu.mmu.Read(cpu.getReg16("HL"))
+	} else {
+		n = cpu.getReg8(reg)
+	}
 
 	z := checkZero(n + 1)
 	h := checkHalfCarry(n, 1, 0)

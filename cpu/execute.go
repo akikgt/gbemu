@@ -258,6 +258,8 @@ func (cpu *CPU) Execute() {
 		cpu.INCr8("H")
 	case 0x2c:
 		cpu.INCr8("L")
+	case 0x34:
+		cpu.INCr8("(HL)")
 
 	// 16-bit ALU
 	// INC nn
@@ -289,6 +291,11 @@ func (cpu *CPU) Execute() {
 		cpu.JRccs8("NC")
 	case 0x38:
 		cpu.JRccs8("C")
+
+	///////////
+	// Calls
+	case 0xcd:
+		cpu.CALLd16()
 
 	// CB-prefixed
 	case 0xcb:

@@ -13,7 +13,7 @@ func printByte(opcode byte) {
 }
 
 func printWord(opcode uint16) {
-	fmt.Printf("%#02x\n", opcode)
+	fmt.Printf("%#04x\n", opcode)
 }
 
 type CPU struct {
@@ -57,4 +57,12 @@ func (cpu *CPU) Fetch() uint8 {
 	cpu.pc++
 
 	return res
+}
+
+func (cpu *CPU) FetchWord() uint16 {
+	low := cpu.Fetch()
+
+	high := cpu.Fetch()
+
+	return uint16(high)<<8 | uint16(low)
 }
