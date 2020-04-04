@@ -205,6 +205,14 @@ func (cpu *CPU) Execute() {
 		cpu.LDHLSPs8()
 	case 0xf9:
 		cpu.LDr16r16("SP", "HL")
+	case 0xf5:
+		cpu.PUSHr16("AF")
+	case 0xc5:
+		cpu.PUSHr16("BC")
+	case 0xd5:
+		cpu.PUSHr16("DE")
+	case 0xe5:
+		cpu.PUSHr16("HL")
 
 	// 8-bit ALU
 	// XOR n

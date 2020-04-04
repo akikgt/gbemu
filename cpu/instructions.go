@@ -247,6 +247,16 @@ func (cpu *CPU) LDHLSPs8() {
 	logger.Log("LDHL SP, %#02x\n", n)
 }
 
+// PUSHr16 decrement SP twice and push register pair onto stack.
+func (cpu *CPU) PUSHr16(reg string) {
+	addr := cpu.getReg16("SP") - 2
+	cpu.setReg16("SP", addr)
+
+	cpu.mmu.WriteWord(addr, cpu.getReg16(reg))
+
+	logger.Log("PUSH %s\n", reg)
+}
+
 //======================================================================
 // Jumps
 //======================================================================
