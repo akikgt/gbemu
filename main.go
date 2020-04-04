@@ -8,10 +8,11 @@ import (
 func main() {
 	mmu := mmu.New()
 	cpu := cpu.New(mmu)
-	var breakPoint uint16 = 0x0b
+	var breakPoint uint16 = 0x11
 
 	for {
 		if cpu.GetPC() >= breakPoint {
+			cpu.Dump()
 			break
 		}
 		cpu.Execute()

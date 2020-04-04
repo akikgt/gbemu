@@ -2,6 +2,7 @@ package cpu
 
 // d8  means immediate 8 bit data
 // d16 means immediate 16 bit data
+// s8  means signed immediate 8 bit data, which are added to pc
 // r8  means 8 bit register
 // r16 means 16 bit register
 
@@ -113,14 +114,25 @@ func (cpu *CPU) LDDmHLA() {
 	cpu.setReg16("HL", addr)
 }
 
-// JRccd8 if current condition is true, add n to current address and jump to it
-// n = one byte signed immediate value
-func (cpu *CPU) JRccd8(cc string) {
+// JRccs8 if current condition is true, add n to current address and jump to it
+func (cpu *CPU) JRccs8(cc string) {
 	var n int8 = int8(cpu.Fetch())
 
 	switch cc {
 	case "NZ":
 		if !testBit(Z, cpu.getReg8("F")) {
+			cpu.pc = uint16(int32(cpu.pc) + int32(n))
+		}
+	case "Z":
+		if testBit(Z, cpu.getReg8("F")) {
+			cpu.pc = uint16(int32(cpu.pc) + int32(n))
+		}
+	case "NC":
+		if !testBit(C, cpu.getReg8("F")) {
+			cpu.pc = uint16(int32(cpu.pc) + int32(n))
+		}
+	case "C":
+		if testBit(C, cpu.getReg8("F")) {
 			cpu.pc = uint16(int32(cpu.pc) + int32(n))
 		}
 	}

@@ -87,7 +87,13 @@ func (cpu *CPU) Execute() {
 
 	// Jumps
 	case 0x20:
-		cpu.JRccd8("NZ")
+		cpu.JRccs8("NZ")
+	case 0x28:
+		cpu.JRccs8("Z")
+	case 0x30:
+		cpu.JRccs8("NC")
+	case 0x38:
+		cpu.JRccs8("C")
 
 	// CB-prefixed
 	case 0xcb:
@@ -97,8 +103,6 @@ func (cpu *CPU) Execute() {
 	default:
 		logger.Log("unknown opcode: %#02x\n", opcode)
 	}
-
-	cpu.Dump() // for debug
 }
 
 func (cpu *CPU) CBPrefixed() {
