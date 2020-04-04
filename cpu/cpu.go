@@ -41,6 +41,7 @@ func New(mmu *mmu.MMU) *CPU {
 }
 
 func (cpu *CPU) Dump() {
+	fmt.Printf("\n")
 	fmt.Println("--------------------")
 	fmt.Printf("A: %#02x F: %#02x\n", cpu.a, cpu.f)
 	fmt.Printf("B: %#02x C: %#02x\n", cpu.b, cpu.c)

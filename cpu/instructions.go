@@ -41,6 +41,13 @@ func checkBorrow(a, b, c uint8) uint8 {
 	return SET
 }
 
+func checkZero(a uint8) uint8 {
+	if a == 0 {
+		return SET
+	}
+	return RESET
+}
+
 func testBit(b uint8, val uint8) bool {
 	if val>>b&1 == 1 {
 		return true
@@ -87,13 +94,13 @@ func (cpu *CPU) LDr8r8(reg1, reg2 string) {
 
 // LDr8mr16 put value at address r16 into r8
 func (cpu *CPU) LDr8mr16(reg1, reg2 string) {
-	logger.Log("LD %s, (%s)", reg1, reg2)
-
 	addr := cpu.getReg16(reg2)
 
 	val := cpu.mmu.Read(addr)
 
 	cpu.setReg8(reg1, val)
+
+	logger.Log("LD %s, (%s)\n", reg1, reg2)
 }
 
 // LDmr16r8 put value into address r16
@@ -338,13 +345,23 @@ func (cpu *CPU) XORr8(reg string) {
 
 	val := cpu.getReg8("A") ^ n
 
-	if val == 0 {
-		cpu.setFlags(SET, RESET, RESET, RESET)
-	} else {
-		cpu.setFlags(RESET, RESET, RESET, RESET)
-	}
+	z := checkZero(val)
+	cpu.setFlags(z, RESET, RESET, RESET)
 
 	cpu.setReg8("A", val)
+}
+
+// INCr8 increment r8
+func (cpu *CPU) INCr8(reg string) {
+	n := cpu.getReg8(reg)
+
+	z := checkZero(n + 1)
+	h := checkHalfCarry(n, 1, 0)
+	cpu.setFlags(z, RESET, h, NA)
+
+	cpu.setReg8(reg, n+1)
+
+	logger.Log("INC %s\n", reg)
 }
 
 ////////////////////////

@@ -243,6 +243,22 @@ func (cpu *CPU) Execute() {
 	case 0xee:
 		cpu.XORr8("#")
 
+	// INC n
+	case 0x3c:
+		cpu.INCr8("A")
+	case 0x04:
+		cpu.INCr8("B")
+	case 0x0c:
+		cpu.INCr8("C")
+	case 0x14:
+		cpu.INCr8("D")
+	case 0x1c:
+		cpu.INCr8("E")
+	case 0x24:
+		cpu.INCr8("H")
+	case 0x2c:
+		cpu.INCr8("L")
+
 	// 16-bit ALU
 	// INC nn
 	case 0x03:
@@ -263,6 +279,7 @@ func (cpu *CPU) Execute() {
 	case 0x3B:
 		cpu.DECr16("SP")
 
+	///////////
 	// Jumps
 	case 0x20:
 		cpu.JRccs8("NZ")
