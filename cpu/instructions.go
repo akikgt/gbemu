@@ -247,7 +247,7 @@ func (cpu *CPU) LDHLSPs8() {
 	logger.Log("LDHL SP, %#02x\n", n)
 }
 
-// PUSHr16 decrement SP twice and push register pair onto stack.
+// PUSHr16 decrement SP twice and push register r16 onto stack.
 func (cpu *CPU) PUSHr16(reg string) {
 	addr := cpu.getReg16("SP") - 2
 	cpu.setReg16("SP", addr)
@@ -255,6 +255,18 @@ func (cpu *CPU) PUSHr16(reg string) {
 	cpu.mmu.WriteWord(addr, cpu.getReg16(reg))
 
 	logger.Log("PUSH %s\n", reg)
+}
+
+// POPr16 pop two bytes off stack into register r16. Increment SP twice
+func (cpu *CPU) POPr16(reg string) {
+	addr := cpu.getReg16("SP")
+	val := cpu.mmu.ReadWord(addr)
+
+	cpu.setReg16("SP", addr+2)
+
+	cpu.setReg16(reg, val)
+
+	logger.Log("POP %s\n", reg)
 }
 
 //======================================================================

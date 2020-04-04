@@ -213,6 +213,14 @@ func (cpu *CPU) Execute() {
 		cpu.PUSHr16("DE")
 	case 0xe5:
 		cpu.PUSHr16("HL")
+	case 0xf1:
+		cpu.POPr16("AF")
+	case 0xc1:
+		cpu.POPr16("BC")
+	case 0xd1:
+		cpu.POPr16("DE")
+	case 0xe1:
+		cpu.POPr16("HL")
 
 	// 8-bit ALU
 	// XOR n
