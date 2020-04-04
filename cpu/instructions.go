@@ -200,11 +200,7 @@ func (cpu *CPU) LDmd16SP() {
 
 	sp := cpu.getReg16("SP")
 
-	lowSP := uint8(sp & 0xff)
-	highSP := uint8((sp >> 8) & 0xff)
-
-	cpu.mmu.Write(addr, lowSP)
-	cpu.mmu.Write(addr+1, highSP)
+	cpu.mmu.WriteWord(addr, sp)
 
 	logger.Log("LD (%#04x), SP\n", addr)
 }
@@ -223,6 +219,11 @@ func (cpu *CPU) LDHLSPs8() {
 	sp := int32(cpu.getReg16("SP"))
 
 	cpu.setReg16("HL", uint16(sp+int32(n)))
+
+	//////////////////////
+	//// TODO: Flags affected
+	// cpu.setFlags()
+	/////////////////////
 
 	logger.Log("LDHL SP, %#02x\n", n)
 }

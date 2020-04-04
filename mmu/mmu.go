@@ -37,3 +37,8 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 func (mmu *MMU) Write(addr uint16, val uint8) {
 	mmu.memory[addr] = val
 }
+
+func (mmu *MMU) WriteWord(addr uint16, val uint16) {
+	mmu.Write(addr, uint8(val&0xff))
+	mmu.Write(addr+1, uint8((val>>8)&0xff))
+}

@@ -199,7 +199,8 @@ func (cpu *CPU) Execute() {
 		cpu.LDr16d16("HL")
 	case 0x31:
 		cpu.LDr16d16("SP")
-
+	case 0x08:
+		cpu.LDmd16SP()
 	case 0xf8:
 		cpu.LDHLSPs8()
 	case 0xf9:
