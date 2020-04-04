@@ -14,6 +14,37 @@ const (
 	NA    = 2
 )
 
+func (cpu *CPU) setFlags(z, n, h, c uint8) {
+	var newFlag uint8 = 0
+	oldFlag := cpu.getReg8("F")
+
+	for b := Z; b >= C; b-- {
+		var status uint8
+
+		switch b {
+		case Z:
+			status = z
+		case N:
+			status = n
+		case H:
+			status = h
+		case C:
+			status = c
+		}
+
+		switch status {
+		case RESET:
+			newFlag &= ^(1 << b)
+		case SET:
+			newFlag |= 1 << b
+		case NA:
+			newFlag |= oldFlag & (1 << b)
+		}
+	}
+
+	cpu.setReg8("F", newFlag)
+}
+
 // GetPC returns current program counter
 func (cpu *CPU) GetPC() uint16 {
 	return cpu.pc

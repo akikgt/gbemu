@@ -21,6 +21,9 @@ func (cpu *CPU) Execute() {
 		cpu.LDr8d8("H")
 	case 0x2e:
 		cpu.LDr8d8("L")
+	case 0x3e:
+		cpu.LDr8d8("A")
+
 	// LD r1, r2
 	case 0x78:
 		cpu.LDr8r8("A", "B")
@@ -34,8 +37,6 @@ func (cpu *CPU) Execute() {
 		cpu.LDr8r8("A", "H")
 	case 0x7d:
 		cpu.LDr8r8("A", "L")
-	case 0x7e:
-		cpu.LDr8r8("A", "(HL)")
 	case 0x7f:
 		cpu.LDr8r8("A", "A")
 	case 0x40:
@@ -50,8 +51,6 @@ func (cpu *CPU) Execute() {
 		cpu.LDr8r8("B", "H")
 	case 0x45:
 		cpu.LDr8r8("B", "L")
-	case 0x46:
-		cpu.LDr8r8("B", "(HL)")
 	case 0x47:
 		cpu.LDr8r8("B", "A")
 	case 0x48:
@@ -66,8 +65,6 @@ func (cpu *CPU) Execute() {
 		cpu.LDr8r8("C", "H")
 	case 0x4d:
 		cpu.LDr8r8("C", "L")
-	case 0x4e:
-		cpu.LDr8r8("C", "(HL)")
 	case 0x4f:
 		cpu.LDr8r8("C", "A")
 	case 0x50:
@@ -82,8 +79,6 @@ func (cpu *CPU) Execute() {
 		cpu.LDr8r8("D", "H")
 	case 0x55:
 		cpu.LDr8r8("D", "L")
-	case 0x56:
-		cpu.LDr8r8("D", "(HL)")
 	case 0x57:
 		cpu.LDr8r8("D", "A")
 	case 0x58:
@@ -98,8 +93,6 @@ func (cpu *CPU) Execute() {
 		cpu.LDr8r8("E", "H")
 	case 0x5d:
 		cpu.LDr8r8("E", "L")
-	case 0x5e:
-		cpu.LDr8r8("E", "(HL)")
 	case 0x5f:
 		cpu.LDr8r8("E", "A")
 	case 0x60:
@@ -114,8 +107,6 @@ func (cpu *CPU) Execute() {
 		cpu.LDr8r8("H", "H")
 	case 0x65:
 		cpu.LDr8r8("H", "L")
-	case 0x66:
-		cpu.LDr8r8("H", "(HL)")
 	case 0x67:
 		cpu.LDr8r8("H", "A")
 	case 0x68:
@@ -130,25 +121,54 @@ func (cpu *CPU) Execute() {
 		cpu.LDr8r8("L", "H")
 	case 0x6d:
 		cpu.LDr8r8("L", "L")
-	case 0x6e:
-		cpu.LDr8r8("L", "(HL)")
 	case 0x6f:
 		cpu.LDr8r8("L", "A")
-	case 0x70:
-		cpu.LDr8r8("(HL)", "B")
-	case 0x71:
-		cpu.LDr8r8("(HL)", "C")
-	case 0x72:
-		cpu.LDr8r8("(HL)", "D")
-	case 0x73:
-		cpu.LDr8r8("(HL)", "E")
-	case 0x74:
-		cpu.LDr8r8("(HL)", "H")
-	case 0x75:
-		cpu.LDr8r8("(HL)", "L")
 
+	// Put value at memory into r8
+	case 0x0a:
+		cpu.LDr8mr16("A", "BC")
+	case 0x1a:
+		cpu.LDr8mr16("A", "DE")
+	case 0x7e:
+		cpu.LDr8mr16("A", "HL")
+	case 0x46:
+		cpu.LDr8mr16("B", "HL")
+	case 0x4e:
+		cpu.LDr8mr16("C", "HL")
+	case 0x56:
+		cpu.LDr8mr16("D", "HL")
+	case 0x5e:
+		cpu.LDr8mr16("E", "HL")
+	case 0x66:
+		cpu.LDr8mr16("H", "HL")
+	case 0x6e:
+		cpu.LDr8mr16("L", "HL")
+	case 0xf2:
+		cpu.LDA0xff00C()
+
+	// Put value into memory
+	case 0x02:
+		cpu.LDmr16r8("BC", "A")
+	case 0x12:
+		cpu.LDmr16r8("DE", "A")
+	case 0x70:
+		cpu.LDmr16r8("HL", "B")
+	case 0x71:
+		cpu.LDmr16r8("HL", "C")
+	case 0x72:
+		cpu.LDmr16r8("HL", "D")
+	case 0x73:
+		cpu.LDmr16r8("HL", "E")
+	case 0x74:
+		cpu.LDmr16r8("HL", "H")
+	case 0x75:
+		cpu.LDmr16r8("HL", "L")
+	case 0x77:
+		cpu.LDmr16r8("HL", "A")
 	case 0x32:
 		cpu.LDDmHLA()
+	case 0xe2:
+		cpu.LD0xff00CA()
 
 	// 16-bit loads
 	case 0x01:

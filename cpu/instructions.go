@@ -13,37 +13,6 @@ func testBit(b uint8, val uint8) bool {
 	return false
 }
 
-func (cpu *CPU) setFlags(z, n, h, c uint8) {
-	var newFlag uint8 = 0
-	oldFlag := cpu.getReg8("F")
-
-	for b := Z; b >= C; b-- {
-		var status uint8
-
-		switch b {
-		case Z:
-			status = z
-		case N:
-			status = n
-		case H:
-			status = h
-		case C:
-			status = c
-		}
-
-		switch status {
-		case RESET:
-			newFlag &= ^(1 << b)
-		case SET:
-			newFlag |= 1 << b
-		case NA:
-			newFlag |= oldFlag & (1 << b)
-		}
-	}
-
-	cpu.setReg8("F", newFlag)
-}
-
 // NOP do nothing
 func (cpu *CPU) NOP() {
 	logger.Log("NOP\n")
@@ -61,20 +30,64 @@ func (cpu *CPU) LDr8d8(reg string) {
 func (cpu *CPU) LDr8r8(reg1, reg2 string) {
 	logger.Log("LD %s, %s\n", reg1, reg2)
 
-	var val byte
-	if reg2 == "(HL)" {
-		addr := cpu.getReg16("HL")
-		val = cpu.mmu.Read(addr)
-	} else {
-		val = cpu.getReg8(reg2)
-	}
+	val := cpu.getReg8(reg2)
 
-	if reg1 == "(HL)" {
-		addr := cpu.getReg16("HL")
-		cpu.mmu.Write(addr, val)
-	} else {
-		cpu.setReg8(reg1, val)
-	}
+	cpu.setReg8(reg1, val)
+}
+
+// LDr8mr16 put value at address r16 into r8
+func (cpu *CPU) LDr8mr16(reg1, reg2 string) {
+	logger.Log("LD %s, (%s)", reg1, reg2)
+
+	addr := cpu.getReg16(reg2)
+
+	val := cpu.mmu.Read(addr)
+
+	cpu.setReg8(reg1, val)
+}
+
+// LDmr16r8 put value at address r16 into r8
+func (cpu *CPU) LDmr16r8(reg1, reg2 string) {
+	logger.Log("LD (%s), %s", reg1, reg2)
+
+	addr := cpu.getReg16(reg1)
+
+	val := cpu.getReg8(reg2)
+
+	cpu.mmu.Write(addr, val)
+}
+
+// LDDmHLA put A into memory address HL. Decrement HL
+func (cpu *CPU) LDDmHLA() {
+	logger.Log("LDD (HL), A\n")
+
+	addr := cpu.getReg16("HL")
+	cpu.mmu.Write(addr, cpu.getReg8("A"))
+
+	addr--
+	cpu.setReg16("HL", addr)
+}
+
+// LDA0xff00C put value at address 0xff00 + register C into A
+func (cpu *CPU) LDA0xff00C() {
+	logger.Log("LD A, (C)")
+
+	addr := 0xff00 + uint16(cpu.getReg8("C"))
+
+	val := cpu.mmu.Read(addr)
+
+	cpu.setReg8("A", val)
+}
+
+// LD0xff00CA put A into address 0xff00 + register C
+func (cpu *CPU) LD0xff00CA() {
+	logger.Log("LD (C), A")
+
+	val := cpu.getReg8("A")
+
+	addr := 0xff00 + uint16(cpu.getReg8("C"))
+
+	cpu.mmu.Write(addr, val)
 }
 
 // LDr16d16 put value d16 into r16
@@ -87,6 +100,36 @@ func (cpu *CPU) LDr16d16(reg string) {
 
 	cpu.setReg16(reg, nn)
 }
+
+////////////////////////////////////////////////
+// Jumps
+
+// JRccs8 if current condition is true, add n to current address and jump to it
+func (cpu *CPU) JRccs8(cc string) {
+	var n int8 = int8(cpu.Fetch())
+
+	switch cc {
+	case "NZ":
+		if !testBit(Z, cpu.getReg8("F")) {
+			cpu.pc = uint16(int32(cpu.pc) + int32(n))
+		}
+	case "Z":
+		if testBit(Z, cpu.getReg8("F")) {
+			cpu.pc = uint16(int32(cpu.pc) + int32(n))
+		}
+	case "NC":
+		if !testBit(C, cpu.getReg8("F")) {
+			cpu.pc = uint16(int32(cpu.pc) + int32(n))
+		}
+	case "C":
+		if testBit(C, cpu.getReg8("F")) {
+			cpu.pc = uint16(int32(cpu.pc) + int32(n))
+		}
+	}
+}
+
+////////////////////////////////////////////////
+// Arithmetics
 
 // XORr8 exclusive OR n with register A, result in A
 func (cpu *CPU) XORr8(reg string) {
@@ -115,42 +158,7 @@ func (cpu *CPU) XORr8(reg string) {
 	cpu.setReg8("A", val)
 }
 
-// LDDmHLA put A into memory address HL. Decrement HL
-func (cpu *CPU) LDDmHLA() {
-	logger.Log("LDD (HL), A\n")
-
-	addr := cpu.getReg16("HL")
-	cpu.mmu.Write(addr, cpu.getReg8("A"))
-
-	addr--
-	cpu.setReg16("HL", addr)
-}
-
-// JRccs8 if current condition is true, add n to current address and jump to it
-func (cpu *CPU) JRccs8(cc string) {
-	var n int8 = int8(cpu.Fetch())
-
-	switch cc {
-	case "NZ":
-		if !testBit(Z, cpu.getReg8("F")) {
-			cpu.pc = uint16(int32(cpu.pc) + int32(n))
-		}
-	case "Z":
-		if testBit(Z, cpu.getReg8("F")) {
-			cpu.pc = uint16(int32(cpu.pc) + int32(n))
-		}
-	case "NC":
-		if !testBit(C, cpu.getReg8("F")) {
-			cpu.pc = uint16(int32(cpu.pc) + int32(n))
-		}
-	case "C":
-		if testBit(C, cpu.getReg8("F")) {
-			cpu.pc = uint16(int32(cpu.pc) + int32(n))
-		}
-	}
-}
-
-////////////////////////
+////////////////////////////////////////////////
 // CB prefixed
 
 // BITbr8 test bit b in register r8
