@@ -69,7 +69,12 @@ func (cpu *CPU) LDr8r8(reg1, reg2 string) {
 		val = cpu.getReg8(reg2)
 	}
 
-	cpu.setReg8(reg1, val)
+	if reg1 == "(HL)" {
+		addr := cpu.getReg16("HL")
+		cpu.mmu.Write(addr, val)
+	} else {
+		cpu.setReg8(reg1, val)
+	}
 }
 
 // LDr16d16 put value d16 into r16
@@ -86,10 +91,15 @@ func (cpu *CPU) LDr16d16(reg string) {
 // XORr8 exclusive OR n with register A, result in A
 func (cpu *CPU) XORr8(reg string) {
 	var n uint8
-	if reg == "#" {
+	switch reg {
+	case "#":
 		n = cpu.Fetch()
 		logger.Log("XOR %#02x\n", n)
-	} else {
+	case "(HL)":
+		addr := cpu.getReg16(reg)
+		n = cpu.mmu.Read(addr)
+		logger.Log("XOR %s\n", reg)
+	default:
 		n = cpu.getReg8(reg)
 		logger.Log("XOR %s\n", reg)
 	}
@@ -97,7 +107,9 @@ func (cpu *CPU) XORr8(reg string) {
 	val := cpu.getReg8("A") ^ n
 
 	if val == 0 {
-		cpu.setFlags(1, 0, 0, 0)
+		cpu.setFlags(SET, RESET, RESET, RESET)
+	} else {
+		cpu.setFlags(RESET, RESET, RESET, RESET)
 	}
 
 	cpu.setReg8("A", val)
