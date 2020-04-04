@@ -64,7 +64,7 @@ func (cpu *CPU) LDr8mr16(reg1, reg2 string) {
 
 // LDmr16r8 put value into address r16
 func (cpu *CPU) LDmr16r8(reg1, reg2 string) {
-	logger.Log("LD (%s), %s", reg1, reg2)
+	logger.Log("LD (%s), %s\n", reg1, reg2)
 
 	addr := cpu.getReg16(reg1)
 
@@ -101,24 +101,24 @@ func (cpu *CPU) LDAmd16() {
 
 // LDmCA put A into address 0xff00 + register C
 func (cpu *CPU) LDmCA() {
-	logger.Log("LD (C), A")
-
 	val := cpu.getReg8("A")
 
 	addr := 0xff00 + uint16(cpu.getReg8("C"))
 
 	cpu.mmu.Write(addr, val)
+
+	logger.Log("LD (C), A\n")
 }
 
 // LDAmC put value at address 0xff00 + register C into A
 func (cpu *CPU) LDAmC() {
-	logger.Log("LD A, (C)")
-
 	addr := 0xff00 + uint16(cpu.getReg8("C"))
 
 	val := cpu.mmu.Read(addr)
 
 	cpu.setReg8("A", val)
+
+	logger.Log("LD A, (C)\n")
 }
 
 // LDHAmd8 put value at address 0xff00 + d8 into A
@@ -141,16 +141,44 @@ func (cpu *CPU) LDHmd8A() {
 	logger.Log("LD (%#02x), A\n", addr)
 }
 
+// LDImHLA put A into memory address HL. Increment HL
+func (cpu *CPU) LDImHLA() {
+	logger.Log("LDI (HL), A\n")
+
+	cpu.LDmr16r8("HL", "A")
+
+	cpu.INCr16("HL")
+}
+
+// LDIAmHL put value at address HL into A. Increment HL
+func (cpu *CPU) LDIAmHL() {
+	logger.Log("LDI A, (HL)\n")
+
+	cpu.LDr8mr16("A", "HL")
+
+	cpu.INCr16("HL")
+}
+
 // LDDmHLA put A into memory address HL. Decrement HL
 func (cpu *CPU) LDDmHLA() {
 	logger.Log("LDD (HL), A\n")
 
-	addr := cpu.getReg16("HL")
-	cpu.mmu.Write(addr, cpu.getReg8("A"))
+	cpu.LDmr16r8("HL", "A")
 
-	addr--
-	cpu.setReg16("HL", addr)
+	cpu.DECr16("HL")
 }
+
+// LDDAmHL put value at address HL into A. Decrement HL
+func (cpu *CPU) LDDAmHL() {
+	logger.Log("LDD A, (HL)\n")
+
+	cpu.LDr8mr16("A", "HL")
+
+	cpu.DECr16("HL")
+}
+
+////////////////////////
+// 16-bit
 
 // LDr16d16 put value d16 into r16
 func (cpu *CPU) LDr16d16(reg string) {
@@ -158,9 +186,45 @@ func (cpu *CPU) LDr16d16(reg string) {
 	high := cpu.Fetch()
 
 	nn := uint16(high)<<8 | uint16(low)
-	logger.Log("LD %s, %#02x\n", reg, nn)
 
 	cpu.setReg16(reg, nn)
+
+	logger.Log("LD %s, %#04x\n", reg, nn)
+}
+
+// LDmd16SP put SP at address d16
+func (cpu *CPU) LDmd16SP() {
+	low := cpu.Fetch()
+	high := cpu.Fetch()
+	addr := uint16(high)<<8 | uint16(low)
+
+	sp := cpu.getReg16("SP")
+
+	lowSP := uint8(sp & 0xff)
+	highSP := uint8((sp >> 8) & 0xff)
+
+	cpu.mmu.Write(addr, lowSP)
+	cpu.mmu.Write(addr+1, highSP)
+
+	logger.Log("LD (%#04x), SP\n", addr)
+}
+
+// LDr16r16 put reg2 into reg1
+func (cpu *CPU) LDr16r16(reg1, reg2 string) {
+	cpu.setReg16(reg1, cpu.getReg16(reg2))
+
+	logger.Log("LD %s, %s\n", reg1, reg2)
+}
+
+// LDHLSPs8 put SP + s8 effective adress into HL
+func (cpu *CPU) LDHLSPs8() {
+	n := int8(cpu.Fetch())
+
+	sp := int32(cpu.getReg16("SP"))
+
+	cpu.setReg16("HL", uint16(sp+int32(n)))
+
+	logger.Log("LDHL SP, %#02x\n", n)
 }
 
 //======================================================================
@@ -169,7 +233,7 @@ func (cpu *CPU) LDr16d16(reg string) {
 
 // JRccs8 if current condition is true, add n to current address and jump to it
 func (cpu *CPU) JRccs8(cc string) {
-	var n int8 = int8(cpu.Fetch())
+	n := int8(cpu.Fetch())
 
 	switch cc {
 	case "NZ":

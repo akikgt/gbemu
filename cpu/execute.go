@@ -143,6 +143,12 @@ func (cpu *CPU) Execute() {
 		cpu.LDr8mr16("H", "HL")
 	case 0x6e:
 		cpu.LDr8mr16("L", "HL")
+
+	case 0x2a:
+		cpu.LDIAmHL()
+	case 0x3a:
+		cpu.LDDAmHL()
+
 	case 0xf0:
 		cpu.LDHAmd8()
 	case 0xf2:
@@ -169,8 +175,12 @@ func (cpu *CPU) Execute() {
 		cpu.LDmr16r8("HL", "L")
 	case 0x77:
 		cpu.LDmr16r8("HL", "A")
+
+	case 0x22:
+		cpu.LDImHLA()
 	case 0x32:
 		cpu.LDDmHLA()
+
 	case 0x36:
 		cpu.LDmHLd8()
 	case 0xe0:
@@ -189,6 +199,11 @@ func (cpu *CPU) Execute() {
 		cpu.LDr16d16("HL")
 	case 0x31:
 		cpu.LDr16d16("SP")
+
+	case 0xf8:
+		cpu.LDHLSPs8()
+	case 0xf9:
+		cpu.LDr16r16("SP", "HL")
 
 	// 8-bit ALU
 	// XOR n
