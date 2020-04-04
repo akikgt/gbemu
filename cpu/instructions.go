@@ -7,6 +7,26 @@ package cpu
 // r16 means 16 bit register
 // m*  means data in memory address *
 
+func signExtend(a uint8) uint16 {
+	return uint16(int8(a))
+}
+
+func checkHalfCarry(a, b, c uint8) uint8 {
+	if ((a&0xf)+(b&0xf)+c)&0x10 == 0x10 {
+		return SET
+	}
+	return RESET
+}
+
+func checkCarry(a, b, c uint8) uint8 {
+	sum := uint16(a) + uint16(b) + uint16(c)
+
+	if sum&0x100 == 0x100 {
+		return SET
+	}
+	return RESET
+}
+
 func testBit(b uint8, val uint8) bool {
 	if val>>b&1 == 1 {
 		return true
@@ -214,16 +234,15 @@ func (cpu *CPU) LDr16r16(reg1, reg2 string) {
 
 // LDHLSPs8 put SP + s8 effective adress into HL
 func (cpu *CPU) LDHLSPs8() {
-	n := int8(cpu.Fetch())
+	n := cpu.Fetch()
 
-	sp := int32(cpu.getReg16("SP"))
+	sp := cpu.getReg16("SP")
 
-	cpu.setReg16("HL", uint16(sp+int32(n)))
+	c := checkCarry(uint8(n), uint8(sp&0xff), 0)
+	h := checkHalfCarry(uint8(n), uint8(sp&0xff), 0)
+	cpu.setFlags(RESET, RESET, h, c)
 
-	//////////////////////
-	//// TODO: Flags affected
-	// cpu.setFlags()
-	/////////////////////
+	cpu.setReg16("HL", sp+signExtend(n))
 
 	logger.Log("LDHL SP, %#02x\n", n)
 }
@@ -234,26 +253,28 @@ func (cpu *CPU) LDHLSPs8() {
 
 // JRccs8 if current condition is true, add n to current address and jump to it
 func (cpu *CPU) JRccs8(cc string) {
-	n := int8(cpu.Fetch())
+	n := cpu.Fetch()
 
 	switch cc {
 	case "NZ":
-		if !testBit(Z, cpu.getReg8("F")) {
-			cpu.pc = uint16(int32(cpu.pc) + int32(n))
+		if testBit(Z, cpu.getReg8("F")) {
+			return
 		}
 	case "Z":
-		if testBit(Z, cpu.getReg8("F")) {
-			cpu.pc = uint16(int32(cpu.pc) + int32(n))
+		if !testBit(Z, cpu.getReg8("F")) {
+			return
 		}
 	case "NC":
-		if !testBit(C, cpu.getReg8("F")) {
-			cpu.pc = uint16(int32(cpu.pc) + int32(n))
+		if testBit(C, cpu.getReg8("F")) {
+			return
 		}
 	case "C":
-		if testBit(C, cpu.getReg8("F")) {
-			cpu.pc = uint16(int32(cpu.pc) + int32(n))
+		if !testBit(C, cpu.getReg8("F")) {
+			return
 		}
 	}
+
+	cpu.pc = cpu.pc + signExtend(n)
 }
 
 //======================================================================
