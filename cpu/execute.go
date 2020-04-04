@@ -143,6 +143,8 @@ func (cpu *CPU) Execute() {
 		cpu.LDr8mr16("H", "HL")
 	case 0x6e:
 		cpu.LDr8mr16("L", "HL")
+	case 0xf0:
+		cpu.LDHAd8()
 	case 0xf2:
 		cpu.LDA0xff00C()
 
@@ -167,6 +169,8 @@ func (cpu *CPU) Execute() {
 		cpu.LDmr16r8("HL", "A")
 	case 0x32:
 		cpu.LDDmHLA()
+	case 0xe0:
+		cpu.LDHd8A()
 	case 0xe2:
 		cpu.LD0xff00CA()
 
