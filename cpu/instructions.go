@@ -544,6 +544,34 @@ func (cpu *CPU) CPr8(reg string) {
 ////////////////////////
 // 16-bit
 
+// func (cpu *CPU) TestFlags() {
+// 	cpu.setReg16("HL", 0xffff)
+// 	// cpu.setReg16("BC", 0x1000) // expect 0b0001
+// 	// cpu.setReg16("BC", 0x0100) // expect 0b0011
+// 	cpu.setReg16("BC", 0x0010) // expect 0b0011
+// 	cpu.ADDHLr16("BC")
+// 	fmt.Printf("%#08b\n", cpu.getReg8("F"))
+// }
+
+// ADDHLr16 add r16 to HL
+func (cpu *CPU) ADDHLr16(reg string) {
+	nn := cpu.getReg16(reg)
+	hl := cpu.getReg16("HL")
+
+	// calculate lower byte first
+	lc := checkCarry(uint8(nn&0xff), uint8(hl&0xff), 0)
+
+	// calculate higher byte
+	h := checkHalfCarry(uint8(nn>>8), uint8(hl>>8), lc)
+	c := checkCarry(uint8(nn>>8), uint8(hl>>8), lc)
+
+	cpu.setFlags(NA, RESET, h, c)
+
+	cpu.setReg16("HL", hl+nn)
+
+	logger.Log("ADD HL, %s\n", reg)
+}
+
 // INCr16 increment r16
 func (cpu *CPU) INCr16(reg string) {
 	cpu.setReg16(reg, cpu.getReg16(reg)+1)

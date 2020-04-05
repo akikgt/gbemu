@@ -46,6 +46,7 @@ func main() {
 
 	for {
 		fmt.Printf("%#04x : ", cpu.GetPC())
+		// cpu.TestFlags()
 
 		if cpu.GetPC() == breakPoint {
 			isContinue := debugMode(cpu, &breakPoint)

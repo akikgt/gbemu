@@ -350,6 +350,16 @@ func (cpu *CPU) Execute() {
 		cpu.CPr8("#")
 
 	// 16-bit ALU
+	// ADD nn
+	case 0x09:
+		cpu.ADDHLr16("BC")
+	case 0x19:
+		cpu.ADDHLr16("DE")
+	case 0x29:
+		cpu.ADDHLr16("HL")
+	case 0x39:
+		cpu.ADDHLr16("SP")
+
 	// INC nn
 	case 0x03:
 		cpu.INCr16("BC")
