@@ -408,6 +408,34 @@ func (cpu *CPU) Execute() {
 	case 0xcd:
 		cpu.CALLd16()
 
+	case 0xc4:
+		cpu.CALLccd16("NZ")
+	case 0xcc:
+		cpu.CALLccd16("Z")
+	case 0xd4:
+		cpu.CALLccd16("NC")
+	case 0xdc:
+		cpu.CALLccd16("C")
+
+	///////////
+	// Restarts
+	case 0xc7:
+		cpu.RSTd16(0x00)
+	case 0xcf:
+		cpu.RSTd16(0x08)
+	case 0xd7:
+		cpu.RSTd16(0x10)
+	case 0xdf:
+		cpu.RSTd16(0x18)
+	case 0xe7:
+		cpu.RSTd16(0x20)
+	case 0xef:
+		cpu.RSTd16(0x28)
+	case 0xf7:
+		cpu.RSTd16(0x30)
+	case 0xff:
+		cpu.RSTd16(0x38)
+
 	///////////
 	// Returns
 	case 0xc9:

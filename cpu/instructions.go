@@ -370,6 +370,46 @@ func (cpu *CPU) CALLd16() {
 	logger.Log("CALL %#04x\n", jumpTo)
 }
 
+// CALLccd16 call address d16 if current condition is true
+func (cpu *CPU) CALLccd16(cc string) {
+	logger.Log("CALL %s\n", cc)
+
+	switch cc {
+	case "NZ":
+		if testBit(Z, cpu.getReg8("F")) {
+			return
+		}
+	case "Z":
+		if !testBit(Z, cpu.getReg8("F")) {
+			return
+		}
+	case "NC":
+		if testBit(C, cpu.getReg8("F")) {
+			return
+		}
+	case "C":
+		if !testBit(C, cpu.getReg8("F")) {
+			return
+		}
+	}
+
+	logger.Log("cc is true\n")
+	cpu.CALLd16()
+}
+
+//======================================================================
+// Restarts
+//======================================================================
+
+// RSTd16 push present address onto stack and jump to address 0x0000 + d16
+func (cpu *CPU) RSTd16(nn uint16) {
+	cpu.pushd16(cpu.pc)
+
+	cpu.pc = nn
+
+	logger.Log("RST %#04x\n", nn)
+}
+
 //======================================================================
 // Returns
 //======================================================================
