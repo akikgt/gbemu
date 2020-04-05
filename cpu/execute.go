@@ -272,22 +272,9 @@ func (cpu *CPU) Execute() {
 		cpu.ADCr8("#")
 
 	// XOR n
-	case 0xa8:
-		cpu.XORr8("B")
-	case 0xa9:
-		cpu.XORr8("C")
-	case 0xaa:
-		cpu.XORr8("D")
-	case 0xab:
-		cpu.XORr8("E")
-	case 0xac:
-		cpu.XORr8("H")
-	case 0xad:
-		cpu.XORr8("L")
-	case 0xae:
-		cpu.XORr8("(HL)")
-	case 0xaf:
-		cpu.XORr8("A")
+	case 0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf:
+		reg := parseReg(opcode)
+		cpu.XORr8(reg)
 	case 0xee:
 		cpu.XORr8("#")
 
@@ -328,22 +315,9 @@ func (cpu *CPU) Execute() {
 		cpu.DECr8("(HL)")
 
 	// CP n
-	case 0xb8:
-		cpu.CPr8("B")
-	case 0xb9:
-		cpu.CPr8("C")
-	case 0xba:
-		cpu.CPr8("D")
-	case 0xbb:
-		cpu.CPr8("E")
-	case 0xbc:
-		cpu.CPr8("H")
-	case 0xbd:
-		cpu.CPr8("L")
-	case 0xbe:
-		cpu.CPr8("(HL)")
-	case 0xbf:
-		cpu.CPr8("A")
+	case 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf:
+		reg := parseReg(opcode)
+		cpu.CPr8(reg)
 	case 0xfe:
 		cpu.CPr8("#")
 
