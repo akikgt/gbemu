@@ -311,7 +311,142 @@ func (cpu *CPU) CBPrefixed() {
 	opcode := cpu.Fetch()
 
 	switch opcode {
+	// BIT
+	case 0x40:
+		cpu.BITbr8(0, "B")
+	case 0x48:
+		cpu.BITbr8(1, "B")
+	case 0x50:
+		cpu.BITbr8(2, "B")
+	case 0x58:
+		cpu.BITbr8(3, "B")
+	case 0x60:
+		cpu.BITbr8(4, "B")
+	case 0x68:
+		cpu.BITbr8(5, "B")
+	case 0x70:
+		cpu.BITbr8(6, "B")
+	case 0x78:
+		cpu.BITbr8(7, "B")
+
+	case 0x41:
+		cpu.BITbr8(0, "C")
+	case 0x49:
+		cpu.BITbr8(1, "C")
+	case 0x51:
+		cpu.BITbr8(2, "C")
+	case 0x59:
+		cpu.BITbr8(3, "C")
+	case 0x61:
+		cpu.BITbr8(4, "C")
+	case 0x69:
+		cpu.BITbr8(5, "C")
+	case 0x71:
+		cpu.BITbr8(6, "C")
+	case 0x79:
+		cpu.BITbr8(7, "C")
+
+	case 0x42:
+		cpu.BITbr8(0, "D")
+	case 0x4a:
+		cpu.BITbr8(1, "D")
+	case 0x52:
+		cpu.BITbr8(2, "D")
+	case 0x5a:
+		cpu.BITbr8(3, "D")
+	case 0x62:
+		cpu.BITbr8(4, "D")
+	case 0x6a:
+		cpu.BITbr8(5, "D")
+	case 0x72:
+		cpu.BITbr8(6, "D")
+	case 0x7a:
+		cpu.BITbr8(7, "D")
+
+	case 0x43:
+		cpu.BITbr8(0, "E")
+	case 0x4b:
+		cpu.BITbr8(1, "E")
+	case 0x53:
+		cpu.BITbr8(2, "E")
+	case 0x5b:
+		cpu.BITbr8(3, "E")
+	case 0x63:
+		cpu.BITbr8(4, "E")
+	case 0x6b:
+		cpu.BITbr8(5, "E")
+	case 0x73:
+		cpu.BITbr8(6, "E")
+	case 0x7b:
+		cpu.BITbr8(7, "E")
+
+	case 0x44:
+		cpu.BITbr8(0, "H")
+	case 0x4c:
+		cpu.BITbr8(1, "H")
+	case 0x54:
+		cpu.BITbr8(2, "H")
+	case 0x5c:
+		cpu.BITbr8(3, "H")
+	case 0x64:
+		cpu.BITbr8(4, "H")
+	case 0x6c:
+		cpu.BITbr8(5, "H")
+	case 0x74:
+		cpu.BITbr8(6, "H")
 	case 0x7c:
 		cpu.BITbr8(7, "H")
+
+	case 0x45:
+		cpu.BITbr8(0, "L")
+	case 0x4d:
+		cpu.BITbr8(1, "L")
+	case 0x55:
+		cpu.BITbr8(2, "L")
+	case 0x5d:
+		cpu.BITbr8(3, "L")
+	case 0x65:
+		cpu.BITbr8(4, "L")
+	case 0x6d:
+		cpu.BITbr8(5, "L")
+	case 0x75:
+		cpu.BITbr8(6, "L")
+	case 0x7d:
+		cpu.BITbr8(7, "L")
+
+	case 0x46:
+		cpu.BITbr8(0, "(HL)")
+	case 0x4e:
+		cpu.BITbr8(1, "(HL)")
+	case 0x56:
+		cpu.BITbr8(2, "(HL)")
+	case 0x5e:
+		cpu.BITbr8(3, "(HL)")
+	case 0x66:
+		cpu.BITbr8(4, "(HL)")
+	case 0x6e:
+		cpu.BITbr8(5, "(HL)")
+	case 0x76:
+		cpu.BITbr8(6, "(HL)")
+	case 0x7e:
+		cpu.BITbr8(7, "(HL)")
+
+	case 0x47:
+		cpu.BITbr8(0, "A")
+	case 0x4f:
+		cpu.BITbr8(1, "A")
+	case 0x57:
+		cpu.BITbr8(2, "A")
+	case 0x5f:
+		cpu.BITbr8(3, "A")
+	case 0x67:
+		cpu.BITbr8(4, "A")
+	case 0x6f:
+		cpu.BITbr8(5, "A")
+	case 0x77:
+		cpu.BITbr8(6, "A")
+	case 0x7f:
+		cpu.BITbr8(7, "A")
+
 	}
 }

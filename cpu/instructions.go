@@ -407,8 +407,7 @@ func (cpu *CPU) BITbr8(b uint8, reg string) {
 
 	var val byte
 	if reg == "(HL)" {
-		addr := cpu.getReg16("HL")
-		val = cpu.mmu.Read(addr)
+		val = cpu.mmu.Read(cpu.getReg16("HL"))
 	} else {
 		val = cpu.getReg8(reg)
 	}
