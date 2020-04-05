@@ -397,18 +397,47 @@ func (cpu *CPU) ADDr8(reg string) {
 
 // ADCr8 add r8 + carry flag to A
 func (cpu *CPU) ADCr8(reg string) {
-	n := cpu.getd8(reg)
+	n := cpu.getd8(reg) + cpu.getFlag(C)
 	a := cpu.getReg8("A")
-	cf := cpu.getFlag(C)
 
-	z := checkZero(a + n + cf)
-	h := checkHalfCarry(a, n, cf)
-	c := checkCarry(a, n, cf)
+	z := checkZero(a + n)
+	h := checkHalfCarry(a, n, 0)
+	c := checkCarry(a, n, 0)
 	cpu.setFlags(z, RESET, h, c)
 
-	cpu.setReg8("A", a+n+cf)
+	cpu.setReg8("A", a+n)
 
-	logger.Log("ADC %s(n=%#02x, cf=%d)\n", reg, n, cf)
+	logger.Log("ADC %s(n=%#02x)\n", reg, n)
+}
+
+// SUBr8 subtract r8 from A
+func (cpu *CPU) SUBr8(reg string) {
+	n := cpu.getd8(reg)
+	a := cpu.getReg8("A")
+
+	z := checkZero(a - n)
+	h := checkHalfBorrow(a, n, 0)
+	c := checkBorrow(a, n, 0)
+	cpu.setFlags(z, SET, h, c)
+
+	cpu.setReg8("A", a-n)
+
+	logger.Log("SUB %s(=%#02x)\n", reg, n)
+}
+
+// SBCr8 subtract r8 + carry flag from A
+func (cpu *CPU) SBCr8(reg string) {
+	n := cpu.getd8(reg) + cpu.getFlag(C)
+	a := cpu.getReg8("A")
+
+	z := checkZero(a - n)
+	h := checkHalfBorrow(a, n, 0)
+	c := checkBorrow(a, n, 0)
+	cpu.setFlags(z, SET, h, c)
+
+	cpu.setReg8("A", a-n)
+
+	logger.Log("SUB %s(=%#02x)\n", reg, n)
 }
 
 // XORr8 exclusive OR n with register A, result in A
