@@ -283,6 +283,26 @@ func (cpu *CPU) Execute() {
 	case 0x35:
 		cpu.DECr8("(HL)")
 
+	// CP n
+	case 0xbf:
+		cpu.CPr8("A")
+	case 0xb8:
+		cpu.CPr8("B")
+	case 0xb9:
+		cpu.CPr8("C")
+	case 0xba:
+		cpu.CPr8("D")
+	case 0xbb:
+		cpu.CPr8("E")
+	case 0xbc:
+		cpu.CPr8("H")
+	case 0xbd:
+		cpu.CPr8("L")
+	case 0xbe:
+		cpu.CPr8("(HL)")
+	case 0xfe:
+		cpu.CPr8("#")
+
 	// 16-bit ALU
 	// INC nn
 	case 0x03:

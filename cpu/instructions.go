@@ -308,6 +308,8 @@ func (cpu *CPU) POPr16(reg string) {
 func (cpu *CPU) JRccs8(cc string) {
 	n := cpu.Fetch()
 
+	logger.Log("JR %s, %#04x\n", cc, n)
+
 	switch cc {
 	case "NZ":
 		if testBit(Z, cpu.getReg8("F")) {
@@ -328,8 +330,6 @@ func (cpu *CPU) JRccs8(cc string) {
 	}
 
 	cpu.pc = cpu.pc + signExtend(n)
-
-	logger.Log("JR %s, %#04x\n", cc, cpu.pc)
 }
 
 //======================================================================
@@ -421,9 +421,21 @@ func (cpu *CPU) DECr8(reg string) {
 }
 
 // CPr8 compare A with r8.
-// This is basically an A - n subtraction instruction
+// This is basically an A - n subtraction instruction.
+// but the result is thrown away
 func (cpu *CPU) CPr8(reg string) {
+	n := cpu.getd8(reg)
+	a := cpu.getReg8("A")
 
+	z := checkZero(a - n)
+	h := checkHalfBorrow(a, n, 0)
+	var c uint8 = RESET
+	if a < n {
+		c = SET
+	}
+	cpu.setFlags(z, SET, h, c)
+
+	logger.Log("CP %s\n", reg)
 }
 
 ////////////////////////
