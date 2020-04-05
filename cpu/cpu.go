@@ -47,9 +47,13 @@ func (cpu *CPU) Dump() {
 	fmt.Printf("B: %#02x C: %#02x\n", cpu.b, cpu.c)
 	fmt.Printf("D: %#02x E: %#02x\n", cpu.d, cpu.e)
 	fmt.Printf("H: %#02x L: %#02x\n", cpu.h, cpu.l)
-	fmt.Printf("SP: %#02x\n", cpu.sp)
-	fmt.Printf("PC: %#02x\n", cpu.pc)
+	fmt.Printf("SP: %#04x\n", cpu.sp)
+	fmt.Printf("PC: %#04x\n", cpu.pc)
 	fmt.Println("--------------------")
+}
+
+func (cpu *CPU) PrintNextIns() {
+	fmt.Printf("Next instruction: %#02x\n", cpu.mmu.Read(cpu.pc))
 }
 
 func (cpu *CPU) Fetch() uint8 {

@@ -304,6 +304,21 @@ func (cpu *CPU) POPr16(reg string) {
 // Jumps
 //======================================================================
 
+// JPd16 jump to address d16
+func (cpu *CPU) JPd16() {
+	cpu.pc = cpu.FetchWord()
+}
+
+// JPHL jump to address contained in HL
+func (cpu *CPU) JPHL() {
+	cpu.pc = cpu.getReg16("HL")
+}
+
+// JRsd8 add sd8 to current address and jump to it
+func (cpu *CPU) JRsd8() {
+	cpu.pc += signExtend(cpu.Fetch())
+}
+
 // JRccs8 if current condition is true, add n to current address and jump to it
 func (cpu *CPU) JRccs8(cc string) {
 	n := cpu.Fetch()

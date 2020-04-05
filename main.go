@@ -18,12 +18,16 @@ func debugMode(cpu *cpu.CPU, breakPoint *uint16) bool {
 	case "d":
 		cpu.Dump()
 		return debugMode(cpu, breakPoint)
+	case "i":
+		cpu.PrintNextIns()
+		return debugMode(cpu, breakPoint)
 	case "n":
 		cpu.Execute()
 		*breakPoint = cpu.GetPC()
 		return true
 	case "c":
-		// loop until BIOS end
+		// loop until end
+		// end of BIOS = 0x100 or end of GB RAM = 0x10000 65536
 		*breakPoint = 0x100
 		return true
 	case "q":
@@ -37,7 +41,7 @@ func debugMode(cpu *cpu.CPU, breakPoint *uint16) bool {
 func main() {
 	mmu := mmu.New()
 	cpu := cpu.New(mmu)
-	var breakPoint uint16 = 0x93
+	var breakPoint uint16 = 0xe8
 
 	for {
 		fmt.Printf("%#04x : ", cpu.GetPC())

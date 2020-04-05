@@ -357,6 +357,19 @@ func (cpu *CPU) Execute() {
 
 	///////////
 	// Jumps
+	// JP nn
+	case 0xc3:
+		cpu.JPd16()
+
+	// JP (HL)
+	case 0xe9:
+		cpu.JPHL()
+
+	// JR n
+	case 0x18:
+		cpu.JRsd8()
+
+	// JR cc, n
 	case 0x20:
 		cpu.JRccs8("NZ")
 	case 0x28:
