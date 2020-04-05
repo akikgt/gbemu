@@ -630,6 +630,30 @@ func (cpu *CPU) DECr16(reg string) {
 // Misc
 //======================================================================
 
+// DAA ajust register A for Binary Coded Decimal
+func (cpu *CPU) DAA() {
+	a := cpu.getReg8("A")
+
+	var c uint8 = RESET
+	low := a & 0xf
+	if low >= 10 {
+		low -= 10
+		c = SET
+	}
+
+	high := a>>4 + c
+	if high >= 10 {
+		high -= 10
+		c = SET
+	}
+
+	res := high<<4 | low
+
+	z := checkZero(res)
+
+	cpu.setFlags(z, NA, RESET, c)
+}
+
 // CPL complement A register
 func (cpu *CPU) CPL() {
 	cpu.setReg8("A", ^cpu.getReg8("A"))

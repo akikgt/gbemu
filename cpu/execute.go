@@ -43,6 +43,9 @@ func (cpu *CPU) Execute() {
 	case 0x10:
 		cpu.STOP()
 
+	case 0x27:
+		cpu.DAA()
+
 	case 0x2f:
 		cpu.CPL()
 
