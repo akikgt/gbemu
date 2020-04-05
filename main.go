@@ -9,15 +9,16 @@ import (
 func main() {
 	mmu := mmu.New()
 	cpu := cpu.New(mmu)
-	var breakPoint uint16 = 0xa8
+	var breakPoint uint16 = 0x30
 
 	for {
 		fmt.Printf("%#04x : ", cpu.GetPC())
 
-		if cpu.GetPC() >= breakPoint {
+		if cpu.GetPC() == breakPoint {
 			cpu.Dump()
 			break
 		}
 		cpu.Execute()
+		// cpu.Dump()
 	}
 }

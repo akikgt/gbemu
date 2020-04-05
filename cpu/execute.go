@@ -267,21 +267,21 @@ func (cpu *CPU) Execute() {
 
 	// DEC n
 	case 0x3d:
-		cpu.INCr8("A")
+		cpu.DECr8("A")
 	case 0x05:
-		cpu.INCr8("B")
+		cpu.DECr8("B")
 	case 0x0d:
-		cpu.INCr8("C")
+		cpu.DECr8("C")
 	case 0x15:
-		cpu.INCr8("D")
+		cpu.DECr8("D")
 	case 0x1d:
-		cpu.INCr8("E")
+		cpu.DECr8("E")
 	case 0x25:
-		cpu.INCr8("H")
+		cpu.DECr8("H")
 	case 0x2d:
-		cpu.INCr8("L")
+		cpu.DECr8("L")
 	case 0x35:
-		cpu.INCr8("(HL)")
+		cpu.DECr8("(HL)")
 
 	// 16-bit ALU
 	// INC nn
@@ -318,6 +318,11 @@ func (cpu *CPU) Execute() {
 	// Calls
 	case 0xcd:
 		cpu.CALLd16()
+
+	///////////
+	// Returns
+	case 0xc9:
+		cpu.RET()
 
 	// CB-prefixed
 	case 0xcb:

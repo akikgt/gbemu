@@ -308,6 +308,8 @@ func (cpu *CPU) JRccs8(cc string) {
 	}
 
 	cpu.pc = cpu.pc + signExtend(n)
+
+	logger.Log("JR %s, %#04x\n", cc, cpu.pc)
 }
 
 //======================================================================
@@ -331,6 +333,24 @@ func (cpu *CPU) CALLd16() {
 	cpu.pc = jumpTo
 
 	logger.Log("CALL %#04x\n", jumpTo)
+}
+
+//======================================================================
+// Returns
+//======================================================================
+
+func (cpu *CPU) popd16() uint16 {
+	addr := cpu.getReg16("SP")
+	cpu.setReg16("SP", addr+2)
+
+	return cpu.mmu.ReadWord(addr)
+}
+
+// RET pop two bytes from stack & jump to that address
+func (cpu *CPU) RET() {
+	cpu.pc = cpu.popd16()
+
+	logger.Log("RET %#04x\n", cpu.pc)
 }
 
 //======================================================================
