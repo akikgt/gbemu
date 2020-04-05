@@ -380,6 +380,37 @@ func (cpu *CPU) RET() {
 ////////////////////////
 // 8-bit
 
+// ADDr8 add r8 to A
+func (cpu *CPU) ADDr8(reg string) {
+	n := cpu.getd8(reg)
+	a := cpu.getReg8("A")
+
+	z := checkZero(a + n)
+	h := checkHalfCarry(a, n, 0)
+	c := checkCarry(a, n, 0)
+	cpu.setFlags(z, RESET, h, c)
+
+	cpu.setReg8("A", a+n)
+
+	logger.Log("ADD %s(=%#02x)\n", reg, n)
+}
+
+// ADCr8 add r8 + carry flag to A
+func (cpu *CPU) ADCr8(reg string) {
+	n := cpu.getd8(reg)
+	a := cpu.getReg8("A")
+	cf := cpu.getFlag(C)
+
+	z := checkZero(a + n + cf)
+	h := checkHalfCarry(a, n, cf)
+	c := checkCarry(a, n, cf)
+	cpu.setFlags(z, RESET, h, c)
+
+	cpu.setReg8("A", a+n+cf)
+
+	logger.Log("ADC %s(n=%#02x, cf=%d)\n", reg, n, cf)
+}
+
 // XORr8 exclusive OR n with register A, result in A
 func (cpu *CPU) XORr8(reg string) {
 	n := cpu.getd8(reg)

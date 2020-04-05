@@ -1,5 +1,35 @@
 package cpu
 
+func parseBit(opcode, base uint8) uint8 {
+	// (higher 4-bit - base) * 2 + bit3
+	return (opcode>>4-base)*2 + (opcode >> 3 & 1)
+}
+
+func parseReg(opcode uint8) string {
+	val := opcode & 0xf
+
+	switch val {
+	case 0x7, 0xf:
+		return "A"
+	case 0x0, 0x8:
+		return "B"
+	case 0x1, 0x9:
+		return "C"
+	case 0x2, 0xa:
+		return "D"
+	case 0x3, 0xb:
+		return "E"
+	case 0x4, 0xc:
+		return "H"
+	case 0x5, 0xd:
+		return "L"
+	case 0x6, 0xe:
+		return "(HL)"
+	}
+
+	return "unknown"
+}
+
 func (cpu *CPU) Execute() {
 	opcode := cpu.Fetch()
 
@@ -227,6 +257,20 @@ func (cpu *CPU) Execute() {
 	case 0x17:
 		cpu.RLr8("A")
 
+	// ADD n
+	case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87:
+		reg := parseReg(opcode)
+		cpu.ADDr8(reg)
+	case 0xc6:
+		cpu.ADDr8("#")
+
+	// ADC n
+	case 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f:
+		reg := parseReg(opcode)
+		cpu.ADCr8(reg)
+	case 0xce:
+		cpu.ADCr8("#")
+
 	// XOR n
 	case 0xa8:
 		cpu.XORr8("B")
@@ -284,8 +328,6 @@ func (cpu *CPU) Execute() {
 		cpu.DECr8("(HL)")
 
 	// CP n
-	case 0xbf:
-		cpu.CPr8("A")
 	case 0xb8:
 		cpu.CPr8("B")
 	case 0xb9:
@@ -300,6 +342,8 @@ func (cpu *CPU) Execute() {
 		cpu.CPr8("L")
 	case 0xbe:
 		cpu.CPr8("(HL)")
+	case 0xbf:
+		cpu.CPr8("A")
 	case 0xfe:
 		cpu.CPr8("#")
 
@@ -368,34 +412,4 @@ func (cpu *CPU) CBPrefixed() {
 		b := parseBit(opcode, 4)
 		cpu.BITbr8(b, reg)
 	}
-}
-
-func parseBit(opcode, base uint8) uint8 {
-	// (higher 4-bit - base) * 2 + bit3
-	return (opcode>>4-base)*2 + (opcode >> 3 & 1)
-}
-
-func parseReg(opcode uint8) string {
-	val := opcode & 0xf
-
-	switch val {
-	case 0x7, 0xf:
-		return "A"
-	case 0x0, 0x8:
-		return "B"
-	case 0x1, 0x9:
-		return "C"
-	case 0x2, 0xa:
-		return "D"
-	case 0x3, 0xb:
-		return "E"
-	case 0x4, 0xc:
-		return "H"
-	case 0x5, 0xd:
-		return "L"
-	case 0x6, 0xe:
-		return "(HL)"
-	}
-
-	return "unknown"
 }
