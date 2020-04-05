@@ -381,6 +381,24 @@ func (cpu *CPU) INCr8(reg string) {
 	logger.Log("INC %s\n", reg)
 }
 
+// DECr8 decrement r8
+func (cpu *CPU) DECr8(reg string) {
+	var n uint8
+	if reg == "(HL)" {
+		n = cpu.mmu.Read(cpu.getReg16("HL"))
+	} else {
+		n = cpu.getReg8(reg)
+	}
+
+	z := checkZero(n - 1)
+	h := checkHalfBorrow(n, 1, 0)
+	cpu.setFlags(z, SET, h, NA)
+
+	cpu.setReg8(reg, n-1)
+
+	logger.Log("DEC %s\n", reg)
+}
+
 ////////////////////////
 // 16-bit
 
