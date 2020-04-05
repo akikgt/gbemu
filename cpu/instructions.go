@@ -455,18 +455,46 @@ func (cpu *CPU) SBCr8(reg string) {
 	logger.Log("SUB %s(=%#02x)\n", reg, n)
 }
 
+// ANDr8 logically AND r8 with A, result in A
+func (cpu *CPU) ANDr8(reg string) {
+	n := cpu.getd8(reg)
+
+	res := cpu.getReg8("A") & n
+
+	z := checkZero(res)
+	cpu.setFlags(z, RESET, SET, RESET)
+
+	cpu.setReg8("A", res)
+
+	logger.Log("AND %s(=%#02x)\n", reg, n)
+}
+
+// ORr8 logically OR r8 with register A, result in A
+func (cpu *CPU) ORr8(reg string) {
+	n := cpu.getd8(reg)
+
+	res := cpu.getReg8("A") | n
+
+	z := checkZero(res)
+	cpu.setFlags(z, RESET, RESET, RESET)
+
+	cpu.setReg8("A", res)
+
+	logger.Log("OR %s(=%#02x)\n", reg, n)
+}
+
 // XORr8 exclusive OR n with register A, result in A
 func (cpu *CPU) XORr8(reg string) {
 	n := cpu.getd8(reg)
 
-	val := cpu.getReg8("A") ^ n
+	res := cpu.getReg8("A") ^ n
 
-	z := checkZero(val)
+	z := checkZero(res)
 	cpu.setFlags(z, RESET, RESET, RESET)
 
-	cpu.setReg8("A", val)
+	cpu.setReg8("A", res)
 
-	logger.Log("XOR %s\n", reg)
+	logger.Log("XOR %s(=%#02x)\n", reg, n)
 }
 
 // INCr8 increment r8
