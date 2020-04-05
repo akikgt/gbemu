@@ -34,8 +34,27 @@ func (cpu *CPU) Execute() {
 	opcode := cpu.Fetch()
 
 	switch opcode {
+
+	// Misc
 	case 0x00:
 		cpu.NOP()
+	case 0x76:
+		cpu.HALT()
+	case 0x10:
+		cpu.STOP()
+
+	case 0x2f:
+		cpu.CPL()
+
+	case 0x3f:
+		cpu.CCF()
+	case 0x37:
+		cpu.SCF()
+
+	case 0xf3:
+		cpu.DI()
+	case 0xfb:
+		cpu.EI()
 
 	// 8-bit loads
 	// LD nn, n

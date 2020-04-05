@@ -627,6 +627,67 @@ func (cpu *CPU) DECr16(reg string) {
 }
 
 //======================================================================
+// Misc
+//======================================================================
+
+// CPL complement A register
+func (cpu *CPU) CPL() {
+	cpu.setReg8("A", ^cpu.getReg8("A"))
+
+	cpu.setFlags(NA, SET, SET, NA)
+
+	logger.Log("CPL\n")
+}
+
+// CCF complement carry flag
+func (cpu *CPU) CCF() {
+	if cpu.getFlag(C) == 1 {
+		cpu.setFlags(NA, RESET, RESET, RESET)
+	} else {
+		cpu.setFlags(NA, RESET, RESET, SET)
+	}
+
+	logger.Log("CCF\n")
+}
+
+// SCF set carry flag
+func (cpu *CPU) SCF() {
+	cpu.setFlags(NA, RESET, RESET, SET)
+
+	logger.Log("SCF\n")
+}
+
+// HALT power down CPU until an interrupt occurs
+func (cpu *CPU) HALT() {
+	// TODO: research HALT
+	cpu.halt = true
+
+	logger.Log("HALT\n")
+}
+
+// STOP halt CPU & LCD display until button pressed
+func (cpu *CPU) STOP() {
+	// TODO: research STOP
+	cpu.stop = true
+
+	logger.Log("STOP\n")
+}
+
+// DI disable interrupts
+func (cpu *CPU) DI() {
+	cpu.isIntEnabled = false
+
+	logger.Log("DI\n")
+}
+
+// EI enable interrupts
+func (cpu *CPU) EI() {
+	cpu.isIntEnabled = true
+
+	logger.Log("EI\n")
+}
+
+//======================================================================
 // CB prefixed
 //======================================================================
 

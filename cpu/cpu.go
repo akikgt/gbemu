@@ -32,11 +32,20 @@ type CPU struct {
 
 	pc uint16 // program counter
 	sp uint16 // stack pointer
+
+	halt         bool
+	stop         bool
+	isIntEnabled bool
 }
 
 // New return CPU
 func New(mmu *mmu.MMU) *CPU {
 	cpu := &CPU{mmu: mmu}
+
+	cpu.halt = false
+	cpu.stop = false
+	cpu.isIntEnabled = true
+
 	return cpu
 }
 
