@@ -8,8 +8,28 @@ package cpu
 // m*  means data in memory address *
 // b   means bit
 
+func (cpu *CPU) getd8(src string) uint8 {
+	var n uint8
+
+	switch src {
+	case "#":
+		n = cpu.Fetch()
+	case "(HL)":
+		n = cpu.mmu.Read(cpu.getReg16("HL"))
+	default:
+		n = cpu.getReg8(src)
+	}
+
+	return n
+}
+
 func signExtend(a uint8) uint16 {
 	return uint16(int8(a))
+}
+
+// param: Z, N, H, C
+func (cpu *CPU) getFlag(f uint8) uint8 {
+	return cpu.getReg8("F") >> f & 1
 }
 
 func checkHalfCarry(a, b, c uint8) uint8 {
@@ -362,18 +382,7 @@ func (cpu *CPU) RET() {
 
 // XORr8 exclusive OR n with register A, result in A
 func (cpu *CPU) XORr8(reg string) {
-	var n uint8
-	switch reg {
-	case "#":
-		n = cpu.Fetch()
-		logger.Log("XOR %#02x\n", n)
-	case "(HL)":
-		n = cpu.mmu.Read(cpu.getReg16("HL"))
-		logger.Log("XOR %s\n", reg)
-	default:
-		n = cpu.getReg8(reg)
-		logger.Log("XOR %s\n", reg)
-	}
+	n := cpu.getd8(reg)
 
 	val := cpu.getReg8("A") ^ n
 
@@ -381,16 +390,13 @@ func (cpu *CPU) XORr8(reg string) {
 	cpu.setFlags(z, RESET, RESET, RESET)
 
 	cpu.setReg8("A", val)
+
+	logger.Log("XOR %s\n", reg)
 }
 
 // INCr8 increment r8
 func (cpu *CPU) INCr8(reg string) {
-	var n uint8
-	if reg == "(HL)" {
-		n = cpu.mmu.Read(cpu.getReg16("HL"))
-	} else {
-		n = cpu.getReg8(reg)
-	}
+	n := cpu.getd8(reg)
 
 	z := checkZero(n + 1)
 	h := checkHalfCarry(n, 1, 0)
@@ -403,12 +409,7 @@ func (cpu *CPU) INCr8(reg string) {
 
 // DECr8 decrement r8
 func (cpu *CPU) DECr8(reg string) {
-	var n uint8
-	if reg == "(HL)" {
-		n = cpu.mmu.Read(cpu.getReg16("HL"))
-	} else {
-		n = cpu.getReg8(reg)
-	}
+	n := cpu.getd8(reg)
 
 	z := checkZero(n - 1)
 	h := checkHalfBorrow(n, 1, 0)
@@ -417,6 +418,12 @@ func (cpu *CPU) DECr8(reg string) {
 	cpu.setReg8(reg, n-1)
 
 	logger.Log("DEC %s\n", reg)
+}
+
+// CPr8 compare A with r8.
+// This is basically an A - n subtraction instruction
+func (cpu *CPU) CPr8(reg string) {
+
 }
 
 ////////////////////////
@@ -442,12 +449,7 @@ func (cpu *CPU) DECr16(reg string) {
 
 // BITbr8 test bit b in register r8
 func (cpu *CPU) BITbr8(b uint8, reg string) {
-	var val uint8
-	if reg == "(HL)" {
-		val = cpu.mmu.Read(cpu.getReg16("HL"))
-	} else {
-		val = cpu.getReg8(reg)
-	}
+	val := cpu.getd8(reg)
 
 	if testBit(b, val) {
 		cpu.setFlags(RESET, RESET, SET, NA)
@@ -460,12 +462,7 @@ func (cpu *CPU) BITbr8(b uint8, reg string) {
 
 // RLr8 rotate r8 left through carry flag
 func (cpu *CPU) RLr8(reg string) {
-	var val uint8
-	if reg == "(HL)" {
-		val = cpu.mmu.Read(cpu.getReg16("HL"))
-	} else {
-		val = cpu.getReg8(reg)
-	}
+	val := cpu.getd8(reg)
 
 	res := val<<1 | cpu.getFlag(C)
 
@@ -479,9 +476,4 @@ func (cpu *CPU) RLr8(reg string) {
 	cpu.setFlags(z, RESET, RESET, c)
 
 	logger.Log("RL %s\n", reg)
-}
-
-// param: Z, N, H, C
-func (cpu *CPU) getFlag(f uint8) uint8 {
-	return cpu.getReg8("F") >> f & 1
 }
