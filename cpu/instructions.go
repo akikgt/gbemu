@@ -6,6 +6,7 @@ package cpu
 // r8  means 8 bit register
 // r16 means 16 bit register
 // m*  means data in memory address *
+// b   means bit
 
 func signExtend(a uint8) uint16 {
 	return uint16(int8(a))
@@ -403,9 +404,7 @@ func (cpu *CPU) DECr16(reg string) {
 
 // BITbr8 test bit b in register r8
 func (cpu *CPU) BITbr8(b uint8, reg string) {
-	logger.Log("BIT %d, %s\n", b, reg)
-
-	var val byte
+	var val uint8
 	if reg == "(HL)" {
 		val = cpu.mmu.Read(cpu.getReg16("HL"))
 	} else {
@@ -417,4 +416,34 @@ func (cpu *CPU) BITbr8(b uint8, reg string) {
 	} else {
 		cpu.setFlags(SET, RESET, SET, NA)
 	}
+
+	logger.Log("BIT %d, %s\n", b, reg)
+}
+
+// RLr8 rotate r8 left through carry flag
+func (cpu *CPU) RLr8(reg string) {
+	var val uint8
+	if reg == "(HL)" {
+		val = cpu.mmu.Read(cpu.getReg16("HL"))
+	} else {
+		val = cpu.getReg8(reg)
+	}
+
+	res := val<<1 | cpu.getFlag(C)
+
+	z := checkZero(res)
+
+	var c uint8 = RESET
+	if val>>7 == 1 {
+		c = SET
+	}
+
+	cpu.setFlags(z, RESET, RESET, c)
+
+	logger.Log("RL %s\n", reg)
+}
+
+// param: Z, N, H, C
+func (cpu *CPU) getFlag(f uint8) uint8 {
+	return cpu.getReg8("F") >> f & 1
 }
