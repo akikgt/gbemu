@@ -630,7 +630,7 @@ func (cpu *CPU) DECr16(reg string) {
 // Misc
 //======================================================================
 
-// DAA ajust register A for Binary Coded Decimal
+// DAA decimal adjust register A for Binary Coded Decimal
 func (cpu *CPU) DAA() {
 	a := cpu.getReg8("A")
 
@@ -744,4 +744,22 @@ func (cpu *CPU) RLr8(reg string) {
 	cpu.setFlags(z, RESET, RESET, c)
 
 	logger.Log("RL %s\n", reg)
+}
+
+// RRr8 rotate r8 right through carry flag
+func (cpu *CPU) RRr8(reg string) {
+	val := cpu.getd8(reg)
+
+	res := val>>1 | cpu.getFlag(C)<<7
+
+	z := checkZero(res)
+
+	var c uint8 = RESET
+	if val&1 == 1 {
+		c = SET
+	}
+
+	cpu.setFlags(z, RESET, RESET, c)
+
+	logger.Log("RR %s\n", reg)
 }
