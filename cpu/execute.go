@@ -485,6 +485,12 @@ func (cpu *CPU) CBPrefixed() {
 	// RR
 	case 0x18 <= opcode && opcode <= 0x1f:
 		cpu.RLr8(reg)
+	// SLA
+	case 0x20 <= opcode && opcode <= 0x27:
+		cpu.SLAr8(reg)
+	// SRA
+	case 0x28 <= opcode && opcode <= 0x2f:
+		cpu.SRAr8(reg)
 	// BIT
 	case 0x40 <= opcode && opcode <= 0x7f:
 		b := parseBit(opcode, 4)

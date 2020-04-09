@@ -763,3 +763,39 @@ func (cpu *CPU) RRr8(reg string) {
 
 	logger.Log("RR %s\n", reg)
 }
+
+// SLAr8 shift r8 left into carry. LSB of r8 set to 0
+func (cpu *CPU) SLAr8(reg string) {
+	val := cpu.getd8(reg)
+
+	res := val << 1
+
+	z := checkZero(res)
+
+	var c uint8 = RESET
+	if val>>7&1 == 1 {
+		c = SET
+	}
+
+	cpu.setFlags(z, RESET, RESET, c)
+
+	logger.Log("SLA %s\n", reg)
+}
+
+// SRAr8 shift r8 right into carry. MSB doesn't change.
+func (cpu *CPU) SRAr8(reg string) {
+	val := cpu.getd8(reg)
+
+	res := val>>1 | val&0x80
+
+	z := checkZero(res)
+
+	var c uint8 = RESET
+	if val&1 == 1 {
+		c = SET
+	}
+
+	cpu.setFlags(z, RESET, RESET, c)
+
+	logger.Log("SRA %s\n", reg)
+}
