@@ -657,6 +657,21 @@ func (cpu *CPU) RRCA() {
 	logger.Log("RRCA\n")
 }
 
+// RRA rotte A right through carry flag
+func (cpu *CPU) RRA() {
+	a := cpu.getReg8("A")
+
+	res := a>>1 | cpu.getFlag(C)<<7
+
+	z := checkZero(res)
+	c := a & 1
+	cpu.setFlags(z, RESET, RESET, c)
+
+	cpu.setReg8("A", a)
+
+	logger.Log("RRCA\n")
+}
+
 //======================================================================
 // Misc
 //======================================================================
