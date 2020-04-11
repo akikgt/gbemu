@@ -23,6 +23,18 @@ func (cpu *CPU) getd8(src string) uint8 {
 	return n
 }
 
+func (cpu *CPU) setd8(dst string, val uint8) {
+
+	switch dst {
+	case "#":
+		logger.Log("cannot set value to immediate value\n")
+	case "(HL)":
+		cpu.mmu.Write(cpu.getReg16("HL"), val)
+	default:
+		cpu.setReg8(dst, val)
+	}
+}
+
 func signExtend(a uint8) uint16 {
 	return uint16(int8(a))
 }
@@ -671,6 +683,10 @@ func (cpu *CPU) DAA() {
 	z := checkZero(res)
 
 	cpu.setFlags(z, NA, RESET, c)
+
+	cpu.setReg8("A", res)
+
+	logger.Log("DAA\n")
 }
 
 // CPL complement A register
@@ -762,6 +778,8 @@ func (cpu *CPU) RLr8(reg string) {
 
 	cpu.setFlags(z, RESET, RESET, c)
 
+	cpu.setd8(reg, res)
+
 	logger.Log("RL %s\n", reg)
 }
 
@@ -779,6 +797,8 @@ func (cpu *CPU) RRr8(reg string) {
 	}
 
 	cpu.setFlags(z, RESET, RESET, c)
+
+	cpu.setd8(reg, res)
 
 	logger.Log("RR %s\n", reg)
 }
@@ -798,6 +818,8 @@ func (cpu *CPU) SLAr8(reg string) {
 
 	cpu.setFlags(z, RESET, RESET, c)
 
+	cpu.setd8(reg, res)
+
 	logger.Log("SLA %s\n", reg)
 }
 
@@ -815,6 +837,8 @@ func (cpu *CPU) SRAr8(reg string) {
 	}
 
 	cpu.setFlags(z, RESET, RESET, c)
+
+	cpu.setd8(reg, res)
 
 	logger.Log("SRA %s\n", reg)
 }
