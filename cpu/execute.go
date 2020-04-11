@@ -473,6 +473,16 @@ func (cpu *CPU) Execute() {
 	case 0xc9:
 		cpu.RET()
 
+	// RET cc
+	case 0xc0:
+		cpu.RETcc("NZ")
+	case 0xc8:
+		cpu.RETcc("Z")
+	case 0xd0:
+		cpu.RETcc("NC")
+	case 0xd8:
+		cpu.RETcc("C")
+
 	// CB-prefixed
 	case 0xcb:
 		logger.Log("CB-prefixed\n")

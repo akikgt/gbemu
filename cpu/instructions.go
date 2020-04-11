@@ -440,6 +440,33 @@ func (cpu *CPU) RET() {
 	logger.Log("RET %#04x\n", cpu.pc)
 }
 
+// RETcc return if current condition is true
+func (cpu *CPU) RETcc(cc string) {
+	logger.Log("RETcc %s\n", cc)
+
+	switch cc {
+	case "NZ":
+		if testBit(Z, cpu.getReg8("F")) {
+			return
+		}
+	case "Z":
+		if !testBit(Z, cpu.getReg8("F")) {
+			return
+		}
+	case "NC":
+		if testBit(C, cpu.getReg8("F")) {
+			return
+		}
+	case "C":
+		if !testBit(C, cpu.getReg8("F")) {
+			return
+		}
+	}
+
+	logger.Log("cc is true\n")
+	cpu.RET()
+}
+
 //======================================================================
 // Arithmetic
 //======================================================================
