@@ -82,11 +82,10 @@ func parseReg(opcode uint8) string {
 	return "unknown"
 }
 
-func (cpu *CPU) Execute() {
-	opcode := cpu.Fetch()
+func (cpu *CPU) Execute() uint8 {
+	cpu.ticks = 0
 
-	// add ticks
-	cpu.ticks += uint32(ticksTable[opcode])
+	opcode := cpu.Fetch()
 
 	switch opcode {
 
@@ -558,6 +557,12 @@ func (cpu *CPU) Execute() {
 	default:
 		logger.Log("unknown opcode: %#02x\n", opcode)
 	}
+
+	// add ticks
+	cpu.ticks += ticksTable[opcode]
+	cpu.totalTicks += uint32(cpu.ticks)
+
+	return cpu.ticks
 }
 
 func (cpu *CPU) CBPrefixed() {

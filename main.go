@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"gbemu/cpu"
+	"gbemu/gpu"
 	"gbemu/mmu"
 	"os"
 )
@@ -41,6 +42,7 @@ func debugMode(cpu *cpu.CPU, breakPoint *uint16) bool {
 func main() {
 	mmu := mmu.New()
 	cpu := cpu.New(mmu)
+	gpu := gpu.New(mmu)
 
 	var breakPoint uint16 = 0xe6
 
@@ -54,7 +56,8 @@ func main() {
 				break
 			}
 		} else {
-			cpu.Execute()
+			ticks := cpu.Execute()
+			gpu.Update(ticks)
 		}
 
 	}

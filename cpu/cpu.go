@@ -17,8 +17,9 @@ func printWord(opcode uint16) {
 }
 
 type CPU struct {
-	mmu   *mmu.MMU
-	ticks uint32
+	mmu        *mmu.MMU
+	ticks      uint8
+	totalTicks uint32
 
 	// registers
 	a byte // accumulator
