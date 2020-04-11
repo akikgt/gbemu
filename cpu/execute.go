@@ -506,7 +506,11 @@ func (cpu *CPU) CBPrefixed() {
 		cpu.SRLr8(reg)
 	// BIT
 	case 0x40 <= opcode && opcode <= 0x7f:
-		b := parseBit(opcode, 4)
+		b := parseBit(opcode, 0x4)
 		cpu.BITbr8(b, reg)
+	// SET
+	case 0xc0 <= opcode && opcode <= 0xff:
+		b := parseBit(opcode, 0xc)
+		cpu.SETbr8(b, reg)
 	}
 }
