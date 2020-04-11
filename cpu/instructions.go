@@ -359,6 +359,34 @@ func (cpu *CPU) JRccs8(cc string) {
 	cpu.pc = cpu.pc + signExtend(n)
 }
 
+// JPccd16 if current condition is true, jump to address d16
+func (cpu *CPU) JPccd16(cc string) {
+	nn := cpu.FetchWord()
+
+	logger.Log("JP %s, %#04x\n", cc, nn)
+
+	switch cc {
+	case "NZ":
+		if testBit(Z, cpu.getReg8("F")) {
+			return
+		}
+	case "Z":
+		if !testBit(Z, cpu.getReg8("F")) {
+			return
+		}
+	case "NC":
+		if testBit(C, cpu.getReg8("F")) {
+			return
+		}
+	case "C":
+		if !testBit(C, cpu.getReg8("F")) {
+			return
+		}
+	}
+
+	cpu.pc = cpu.pc + nn
+}
+
 //======================================================================
 // Calls
 //======================================================================
@@ -438,6 +466,16 @@ func (cpu *CPU) RET() {
 	cpu.pc = cpu.popd16()
 
 	logger.Log("RET %#04x\n", cpu.pc)
+}
+
+// RETI return and enable interrupts
+func (cpu *CPU) RETI() {
+	cpu.pc = cpu.popd16()
+
+	logger.Log("RETI %#04x\n", cpu.pc)
+	logger.Log("Enable interrupts\n")
+
+	cpu.EI()
 }
 
 // RETcc return if current condition is true

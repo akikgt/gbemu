@@ -417,6 +417,16 @@ func (cpu *CPU) Execute() {
 	case 0xc3:
 		cpu.JPd16()
 
+	// JP cc, nn
+	case 0xc2:
+		cpu.JPccd16("NZ")
+	case 0xca:
+		cpu.JPccd16("Z")
+	case 0xd2:
+		cpu.JPccd16("NC")
+	case 0xda:
+		cpu.JPccd16("C")
+
 	// JP (HL)
 	case 0xe9:
 		cpu.JPHL()
@@ -472,6 +482,8 @@ func (cpu *CPU) Execute() {
 	// Returns
 	case 0xc9:
 		cpu.RET()
+	case 0xd9:
+		cpu.RETI()
 
 	// RET cc
 	case 0xc0:
