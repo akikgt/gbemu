@@ -903,3 +903,23 @@ func (cpu *CPU) SRAr8(reg string) {
 
 	logger.Log("SRA %s\n", reg)
 }
+
+// SRLr8 shift r8 right into carry. MSB set to 0
+func (cpu *CPU) SRLr8(reg string) {
+	val := cpu.getd8(reg)
+
+	res := (val >> 1) & 0x7f
+
+	z := checkZero(res)
+
+	var c uint8 = RESET
+	if val&1 == 1 {
+		c = SET
+	}
+
+	cpu.setFlags(z, RESET, RESET, c)
+
+	cpu.setd8(reg, res)
+
+	logger.Log("SRA %s\n", reg)
+}
