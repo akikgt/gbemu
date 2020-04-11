@@ -789,6 +789,11 @@ func (cpu *CPU) SETbr8(b uint8, reg string) {
 	cpu.setd8(reg, cpu.getd8(reg)|1<<b)
 }
 
+// RESbr8 reset bit b in register r8
+func (cpu *CPU) RESbr8(b uint8, reg string) {
+	cpu.setd8(reg, cpu.getd8(reg)&^(1<<b))
+}
+
 // RLCr8 rotate r8 left. old bit 7 to carry flag
 func (cpu *CPU) RLCr8(reg string) {
 	val := cpu.getd8(reg)
