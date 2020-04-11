@@ -649,7 +649,10 @@ func (cpu *CPU) RRCA() {
 	res := a >> 1
 
 	z := checkZero(res)
-	c := a & 1
+	var c uint8 = RESET
+	if a&1 == 1 {
+		c = SET
+	}
 	cpu.setFlags(z, RESET, RESET, c)
 
 	cpu.setReg8("A", a)
@@ -664,7 +667,10 @@ func (cpu *CPU) RRA() {
 	res := a>>1 | cpu.getFlag(C)<<7
 
 	z := checkZero(res)
-	c := a & 1
+	var c uint8 = RESET
+	if a&1 == 1 {
+		c = SET
+	}
 	cpu.setFlags(z, RESET, RESET, c)
 
 	cpu.setReg8("A", a)
@@ -796,6 +802,26 @@ func (cpu *CPU) RLr8(reg string) {
 	cpu.setd8(reg, res)
 
 	logger.Log("RL %s\n", reg)
+}
+
+// RLCr8 rotate r8 left. old bit 7 to carry flag
+func (cpu *CPU) RLCr8(reg string) {
+	val := cpu.getd8(reg)
+
+	res := val << 1
+
+	z := checkZero(res)
+
+	var c uint8 = RESET
+	if val>>7 == 1 {
+		c = SET
+	}
+
+	cpu.setFlags(z, RESET, RESET, c)
+
+	cpu.setd8(reg, res)
+
+	logger.Log("RLC %s\n", reg)
 }
 
 // RRr8 rotate r8 right through carry flag

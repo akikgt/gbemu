@@ -483,6 +483,9 @@ func (cpu *CPU) CBPrefixed() {
 	reg := parseReg(opcode)
 
 	switch {
+	// RLC
+	case 0x00 <= opcode && opcode <= 0x07:
+		cpu.RLCr8(reg)
 	// RL
 	case 0x10 <= opcode && opcode <= 0x17:
 		cpu.RLr8(reg)
