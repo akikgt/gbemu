@@ -276,6 +276,8 @@ func (cpu *CPU) Execute() {
 
 	// 8-bit ALU
 	// Rotate & Shifts
+	case 0x07:
+		cpu.RLCr8("A")
 	case 0x17:
 		cpu.RLr8("A")
 	case 0x0f:
@@ -494,7 +496,7 @@ func (cpu *CPU) CBPrefixed() {
 		cpu.RRCr8(reg)
 	// RR
 	case 0x18 <= opcode && opcode <= 0x1f:
-		cpu.RLr8(reg)
+		cpu.RRr8(reg)
 	// SLA
 	case 0x20 <= opcode && opcode <= 0x27:
 		cpu.SLAr8(reg)
