@@ -624,6 +624,22 @@ func (cpu *CPU) ADDHLr16(reg string) {
 	logger.Log("ADD HL, %s\n", reg)
 }
 
+// ADDSPsd8 add sd8 to stack pointer sp
+func (cpu *CPU) ADDSPsd8() {
+	n := cpu.Fetch()
+	sp := cpu.getReg16("SP")
+
+	var spl uint8 = uint8(sp & 0xff)
+	h := checkHalfCarry(n, spl, 0)
+	c := checkCarry(n, spl, 0)
+
+	cpu.setFlags(RESET, RESET, h, c)
+
+	cpu.setReg16("SP", sp+signExtend(n))
+
+	logger.Log("s")
+}
+
 // INCr16 increment r16
 func (cpu *CPU) INCr16(reg string) {
 	cpu.setReg16(reg, cpu.getReg16(reg)+1)

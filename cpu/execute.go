@@ -388,6 +388,10 @@ func (cpu *CPU) Execute() {
 	case 0x39:
 		cpu.ADDHLr16("SP")
 
+	// ADD SP, n
+	case 0xe8:
+		cpu.ADDSPsd8()
+
 	// INC nn
 	case 0x03:
 		cpu.INCr16("BC")
