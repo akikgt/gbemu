@@ -784,6 +784,26 @@ func (cpu *CPU) BITbr8(b uint8, reg string) {
 	logger.Log("BIT %d, %s\n", b, reg)
 }
 
+// RLCr8 rotate r8 left. old bit 7 to carry flag
+func (cpu *CPU) RLCr8(reg string) {
+	val := cpu.getd8(reg)
+
+	res := val << 1
+
+	z := checkZero(res)
+
+	var c uint8 = RESET
+	if val>>7 == 1 {
+		c = SET
+	}
+
+	cpu.setFlags(z, RESET, RESET, c)
+
+	cpu.setd8(reg, res)
+
+	logger.Log("RLC %s\n", reg)
+}
+
 // RLr8 rotate r8 left through carry flag
 func (cpu *CPU) RLr8(reg string) {
 	val := cpu.getd8(reg)
@@ -804,16 +824,16 @@ func (cpu *CPU) RLr8(reg string) {
 	logger.Log("RL %s\n", reg)
 }
 
-// RLCr8 rotate r8 left. old bit 7 to carry flag
-func (cpu *CPU) RLCr8(reg string) {
+// RRCr8 rotate r8 right. old bit 0 to carry flag
+func (cpu *CPU) RRCr8(reg string) {
 	val := cpu.getd8(reg)
 
-	res := val << 1
+	res := val >> 1
 
 	z := checkZero(res)
 
 	var c uint8 = RESET
-	if val>>7 == 1 {
+	if val&1 == 1 {
 		c = SET
 	}
 
@@ -821,7 +841,7 @@ func (cpu *CPU) RLCr8(reg string) {
 
 	cpu.setd8(reg, res)
 
-	logger.Log("RLC %s\n", reg)
+	logger.Log("RR %s\n", reg)
 }
 
 // RRr8 rotate r8 right through carry flag
