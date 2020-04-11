@@ -787,11 +787,30 @@ func (cpu *CPU) BITbr8(b uint8, reg string) {
 // SETbr8 set bit b in register r8
 func (cpu *CPU) SETbr8(b uint8, reg string) {
 	cpu.setd8(reg, cpu.getd8(reg)|1<<b)
+
+	logger.Log("SET %s\n", reg)
 }
 
 // RESbr8 reset bit b in register r8
 func (cpu *CPU) RESbr8(b uint8, reg string) {
 	cpu.setd8(reg, cpu.getd8(reg)&^(1<<b))
+
+	logger.Log("RES %s\n", reg)
+}
+
+// SWAPr8 swap upper & lower nibles of r8
+func (cpu *CPU) SWAPr8(reg string) {
+	val := cpu.getd8(reg)
+
+	res := val>>4 | val&0x0f<<4
+
+	z := checkZero(res)
+
+	cpu.setFlags(z, RESET, RESET, RESET)
+
+	cpu.setd8(reg, res)
+
+	logger.Log("SWAP %s\n", reg)
 }
 
 // RLCr8 rotate r8 left. old bit 7 to carry flag

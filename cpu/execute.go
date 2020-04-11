@@ -501,6 +501,9 @@ func (cpu *CPU) CBPrefixed() {
 	// SRA
 	case 0x28 <= opcode && opcode <= 0x2f:
 		cpu.SRAr8(reg)
+	// SWAP
+	case 0x30 <= opcode && opcode <= 0x37:
+		cpu.SWAPr8(reg)
 	// SRL
 	case 0x38 <= opcode && opcode <= 0x3f:
 		cpu.SRLr8(reg)
