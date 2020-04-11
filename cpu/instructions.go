@@ -316,6 +316,29 @@ func (cpu *CPU) POPr16(reg string) {
 // Jumps
 //======================================================================
 
+func (cpu *CPU) checkCurrentCondition(cc string) bool {
+	switch cc {
+	case "NZ":
+		if testBit(Z, cpu.getReg8("F")) {
+			return false
+		}
+	case "Z":
+		if !testBit(Z, cpu.getReg8("F")) {
+			return false
+		}
+	case "NC":
+		if testBit(C, cpu.getReg8("F")) {
+			return false
+		}
+	case "C":
+		if !testBit(C, cpu.getReg8("F")) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // JPd16 jump to address d16
 func (cpu *CPU) JPd16() {
 	cpu.pc = cpu.FetchWord()
@@ -337,26 +360,13 @@ func (cpu *CPU) JRccs8(cc string) {
 
 	logger.Log("JR %s, %#04x\n", cc, n)
 
-	switch cc {
-	case "NZ":
-		if testBit(Z, cpu.getReg8("F")) {
-			return
-		}
-	case "Z":
-		if !testBit(Z, cpu.getReg8("F")) {
-			return
-		}
-	case "NC":
-		if testBit(C, cpu.getReg8("F")) {
-			return
-		}
-	case "C":
-		if !testBit(C, cpu.getReg8("F")) {
-			return
-		}
+	if !cpu.checkCurrentCondition(cc) {
+		cpu.ticks += 8
+		return
 	}
 
 	cpu.pc = cpu.pc + signExtend(n)
+	cpu.ticks += 12
 }
 
 // JPccd16 if current condition is true, jump to address d16
@@ -365,26 +375,13 @@ func (cpu *CPU) JPccd16(cc string) {
 
 	logger.Log("JP %s, %#04x\n", cc, nn)
 
-	switch cc {
-	case "NZ":
-		if testBit(Z, cpu.getReg8("F")) {
-			return
-		}
-	case "Z":
-		if !testBit(Z, cpu.getReg8("F")) {
-			return
-		}
-	case "NC":
-		if testBit(C, cpu.getReg8("F")) {
-			return
-		}
-	case "C":
-		if !testBit(C, cpu.getReg8("F")) {
-			return
-		}
+	if !cpu.checkCurrentCondition(cc) {
+		cpu.ticks += 12
+		return
 	}
 
 	cpu.pc = cpu.pc + nn
+	cpu.ticks += 16
 }
 
 //======================================================================
@@ -414,40 +411,15 @@ func (cpu *CPU) CALLd16() {
 func (cpu *CPU) CALLccd16(cc string) {
 	logger.Log("CALL %s\n", cc)
 
-	switch cc {
-	case "NZ":
-		if testBit(Z, cpu.getReg8("F")) {
-			return
-		}
-	case "Z":
-		if !testBit(Z, cpu.getReg8("F")) {
-			return
-		}
-	case "NC":
-		if testBit(C, cpu.getReg8("F")) {
-			return
-		}
-	case "C":
-		if !testBit(C, cpu.getReg8("F")) {
-			return
-		}
+	if !cpu.checkCurrentCondition(cc) {
+		cpu.ticks += 12
+		return
 	}
 
 	logger.Log("cc is true\n")
 	cpu.CALLd16()
-}
 
-//======================================================================
-// Restarts
-//======================================================================
-
-// RSTd16 push present address onto stack and jump to address 0x0000 + d16
-func (cpu *CPU) RSTd16(nn uint16) {
-	cpu.pushd16(cpu.pc)
-
-	cpu.pc = nn
-
-	logger.Log("RST %#04x\n", nn)
+	cpu.ticks += 24
 }
 
 //======================================================================
@@ -482,27 +454,28 @@ func (cpu *CPU) RETI() {
 func (cpu *CPU) RETcc(cc string) {
 	logger.Log("RETcc %s\n", cc)
 
-	switch cc {
-	case "NZ":
-		if testBit(Z, cpu.getReg8("F")) {
-			return
-		}
-	case "Z":
-		if !testBit(Z, cpu.getReg8("F")) {
-			return
-		}
-	case "NC":
-		if testBit(C, cpu.getReg8("F")) {
-			return
-		}
-	case "C":
-		if !testBit(C, cpu.getReg8("F")) {
-			return
-		}
+	if !cpu.checkCurrentCondition(cc) {
+		cpu.ticks += 8
+		return
 	}
 
 	logger.Log("cc is true\n")
 	cpu.RET()
+
+	cpu.ticks += 20
+}
+
+//======================================================================
+// Restarts
+//======================================================================
+
+// RSTd16 push present address onto stack and jump to address 0x0000 + d16
+func (cpu *CPU) RSTd16(nn uint16) {
+	cpu.pushd16(cpu.pc)
+
+	cpu.pc = nn
+
+	logger.Log("RST %#04x\n", nn)
 }
 
 //======================================================================

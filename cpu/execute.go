@@ -1,5 +1,6 @@
 package cpu
 
+// 0 tick means undefined or conditional calls and returns
 var ticksTable [256]uint8 = [256]uint8{
 	// 0x
 	4, 12, 8, 8, 4, 4, 8, 8,
@@ -11,8 +12,8 @@ var ticksTable [256]uint8 = [256]uint8{
 	0, 12, 8, 8, 4, 4, 8, 4,
 	0, 8, 8, 8, 4, 4, 8, 4,
 	// 3x
-	0, 12, 8, 8, 12, 12, 12,
-	4, 0, 8, 8, 8, 4, 4, 8, 4,
+	0, 12, 8, 8, 12, 12, 12, 4,
+	0, 8, 8, 8, 4, 4, 8, 4,
 	// 4x
 	4, 4, 4, 4, 4, 4, 8, 4,
 	4, 4, 4, 4, 4, 4, 8, 4,
