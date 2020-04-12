@@ -3,13 +3,16 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"gbemu/cpu"
-	"gbemu/gpu"
-	"gbemu/mmu"
+	c "gbemu/cpu"
+	g "gbemu/gpu"
+	m "gbemu/mmu"
+	"log"
 	"os"
+
+	"github.com/hajimehoshi/ebiten"
 )
 
-func debugMode(cpu *cpu.CPU, breakPoint *uint16) bool {
+func debugMode(cpu *c.CPU, breakPoint *uint16) bool {
 	fmt.Printf("_")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
@@ -39,14 +42,31 @@ func debugMode(cpu *cpu.CPU, breakPoint *uint16) bool {
 	}
 }
 
-func main() {
-	gpu := gpu.New()
-	mmu := mmu.New(gpu)
-	cpu := cpu.New(mmu)
+const (
+	screenHeight = 160
+	screenWidth  = 144
 
-	var breakPoint uint16 = 0xfe
+	// GB CPU is 4194304Hz. To get 60FPS, 4194304/60
+	maxTicks = 69905
+)
 
-	for {
+var (
+	gpu        *g.GPU = g.New()
+	mmu        *m.MMU = m.New(gpu)
+	cpu        *c.CPU = c.New(mmu)
+	breakPoint uint16 = 0xfe
+)
+
+func update(screen *ebiten.Image) error {
+
+	if ebiten.IsDrawingSkipped() {
+		return nil
+	}
+
+	// reset TotalTicks every update
+	cpu.TotalTicks = 0
+
+	for cpu.TotalTicks < maxTicks {
 		fmt.Printf("%#04x : ", cpu.GetPC())
 		// cpu.TestFlags()
 
@@ -60,5 +80,16 @@ func main() {
 			gpu.Update(ticks)
 		}
 
+	}
+
+	gpu.DisplayTileSets()
+	screen.ReplacePixels(gpu.Pixels)
+
+	return nil
+}
+
+func main() {
+	if err := ebiten.Run(update, screenWidth, screenHeight, 2, "Game Boy Emulator"); err != nil {
+		log.Fatal(err)
 	}
 }

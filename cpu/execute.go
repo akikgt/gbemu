@@ -560,7 +560,7 @@ func (cpu *CPU) Execute() uint8 {
 
 	// add ticks
 	cpu.ticks += ticksTable[opcode]
-	cpu.totalTicks += uint32(cpu.ticks)
+	cpu.TotalTicks += uint32(cpu.ticks)
 
 	return cpu.ticks
 }

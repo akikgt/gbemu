@@ -2,6 +2,11 @@ package gpu
 
 import "fmt"
 
+const (
+	screenHeight = 160
+	screenWidth  = 144
+)
+
 type GPU struct {
 	counter uint16
 
@@ -16,12 +21,77 @@ type GPU struct {
 	lyc         uint8 // 0xff45
 	wy          uint8 // 0xff4a
 	wx          uint8 // 0xff4b
+
+	Pixels   []byte
+	tileSets [384][8][8]uint8
 }
 
 func New() *GPU {
 	gpu := &GPU{}
 
+	gpu.Pixels = make([]byte, screenHeight*screenWidth*4)
+	for y := 0; y < screenHeight; y++ {
+		for x := 0; x < screenWidth; x++ {
+			gpu.Pixels[(y*screenWidth+x)*4+0] = 0xff // R
+			gpu.Pixels[(y*screenWidth+x)*4+1] = 0xff // G
+			gpu.Pixels[(y*screenWidth+x)*4+2] = 0xff // B
+			gpu.Pixels[(y*screenWidth+x)*4+3] = 0xff // A
+		}
+	}
+
 	return gpu
+}
+
+func (gpu *GPU) DisplayTileSets() {
+	// get tile sets
+	for i := 0; i < 384; i++ {
+
+		for y := 0; y < 8; y++ {
+			// each tile data is 16 byte
+			data1 := gpu.vram[i*16+y*2]
+			data2 := gpu.vram[i*16+y*2+1]
+
+			for x := 0; x < 8; x++ {
+				b := 7 - x
+				color := (data2>>b&1)<<1 | (data1 >> b & 1)
+
+				gpu.tileSets[i][y][x] = color
+			}
+
+		}
+	}
+
+	// display
+	for y := 0; y < screenHeight; y++ {
+		for x := 0; x < screenWidth; x++ {
+			tileNum := (y/8)*(screenWidth/8) + x/8
+			color := gpu.tileSets[tileNum][y%8][x%8]
+
+			switch color {
+			case 0:
+				gpu.Pixels[(y*screenWidth+x)*4+0] = 0xff // R
+				gpu.Pixels[(y*screenWidth+x)*4+1] = 0xff // G
+				gpu.Pixels[(y*screenWidth+x)*4+2] = 0xff // B
+				gpu.Pixels[(y*screenWidth+x)*4+3] = 0xff // A
+			case 1:
+				gpu.Pixels[(y*screenWidth+x)*4+0] = 0xcc // R
+				gpu.Pixels[(y*screenWidth+x)*4+1] = 0xcc // G
+				gpu.Pixels[(y*screenWidth+x)*4+2] = 0xcc // B
+				gpu.Pixels[(y*screenWidth+x)*4+3] = 0xff // A
+			case 2:
+				gpu.Pixels[(y*screenWidth+x)*4+0] = 0x77 // R
+				gpu.Pixels[(y*screenWidth+x)*4+1] = 0x77 // G
+				gpu.Pixels[(y*screenWidth+x)*4+2] = 0x77 // B
+				gpu.Pixels[(y*screenWidth+x)*4+3] = 0xff // A
+			case 3:
+				gpu.Pixels[(y*screenWidth+x)*4+0] = 0x00 // R
+				gpu.Pixels[(y*screenWidth+x)*4+1] = 0x00 // G
+				gpu.Pixels[(y*screenWidth+x)*4+2] = 0x00 // B
+				gpu.Pixels[(y*screenWidth+x)*4+3] = 0xff // A
+			}
+
+		}
+	}
 }
 
 func (gpu *GPU) Read(addr uint16) uint8 {
