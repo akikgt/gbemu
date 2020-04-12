@@ -1,11 +1,15 @@
 package mmu
 
+import "gbemu/gpu"
+
 type MMU struct {
 	memory [0x10000]uint8
+
+	gpu *gpu.GPU
 }
 
-func New() *MMU {
-	mmu := &MMU{}
+func New(gpu *gpu.GPU) *MMU {
+	mmu := &MMU{gpu: gpu}
 
 	mmu.memory = [0x10000]uint8{
 		// BIOS
@@ -41,10 +45,24 @@ func New() *MMU {
 }
 
 func (mmu *MMU) Read(addr uint16) uint8 {
+	switch {
+	case 0x8000 <= addr && addr <= 0x9fff:
+		return mmu.gpu.Read(addr)
+	case 0xff41 <= addr && addr <= 0xff4b:
+		return mmu.gpu.Read(addr)
+	}
 	return mmu.memory[addr]
 }
 
 func (mmu *MMU) Write(addr uint16, val uint8) {
+	switch {
+	case 0x8000 <= addr && addr <= 0x9fff:
+		mmu.gpu.Write(addr, val)
+		return
+	case 0xff41 <= addr && addr <= 0xff4b:
+		mmu.gpu.Write(addr, val)
+		return
+	}
 	mmu.memory[addr] = val
 }
 

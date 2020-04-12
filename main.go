@@ -40,11 +40,11 @@ func debugMode(cpu *cpu.CPU, breakPoint *uint16) bool {
 }
 
 func main() {
-	mmu := mmu.New()
+	gpu := gpu.New()
+	mmu := mmu.New(gpu)
 	cpu := cpu.New(mmu)
-	gpu := gpu.New(mmu)
 
-	var breakPoint uint16 = 0xe6
+	var breakPoint uint16 = 0xfe
 
 	for {
 		fmt.Printf("%#04x : ", cpu.GetPC())

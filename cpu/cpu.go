@@ -59,7 +59,7 @@ func (cpu *CPU) Dump() {
 	fmt.Printf("H: %#02x L: %#02x\n", cpu.h, cpu.l)
 	fmt.Printf("SP: %#04x\n", cpu.sp)
 	fmt.Printf("PC: %#04x\n", cpu.pc)
-	fmt.Printf("Ticks: %08d\n", cpu.ticks)
+	fmt.Printf("TotalTicks: %08d\n", cpu.totalTicks)
 	fmt.Println("--------------------")
 }
 
