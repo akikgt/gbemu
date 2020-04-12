@@ -6,7 +6,7 @@ import (
 	"gbemu/utils"
 )
 
-var logger *utils.Logger = utils.NewLogger(true)
+var logger *utils.Logger = utils.NewLogger(false)
 
 func printByte(opcode byte) {
 	fmt.Printf("%#02x\n", opcode)

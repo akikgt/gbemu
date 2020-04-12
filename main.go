@@ -43,8 +43,8 @@ func debugMode(cpu *c.CPU, breakPoint *uint16) bool {
 }
 
 const (
-	screenHeight = 160
-	screenWidth  = 144
+	screenWidth  = 160
+	screenHeight = 144
 
 	// GB CPU is 4194304Hz. To get 60FPS, 4194304/60
 	maxTicks = 69905
@@ -82,7 +82,6 @@ func update(screen *ebiten.Image) error {
 
 	}
 
-	gpu.DisplayTileSets()
 	screen.ReplacePixels(gpu.Pixels)
 
 	return nil
