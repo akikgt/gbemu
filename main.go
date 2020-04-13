@@ -52,10 +52,11 @@ const (
 )
 
 var (
-	gpu        *g.GPU = g.New()
-	mmu        *m.MMU = m.New(gpu)
-	cpu        *c.CPU = c.New(mmu)
-	breakPoint uint16 = 0xfe
+	gpu *g.GPU = g.New()
+	mmu *m.MMU = m.New(gpu)
+	cpu *c.CPU = c.New(mmu)
+	// breakPoint uint16 = 0x100
+	// breakPoint uint16 = 0x282a // tetris end of tileset loading
 )
 
 func update(screen *ebiten.Image) error {
@@ -67,15 +68,18 @@ func update(screen *ebiten.Image) error {
 		// fmt.Printf("%#04x : ", cpu.GetPC())
 		// cpu.TestFlags()
 
-		if cpu.GetPC() == breakPoint {
-			isContinue := debugMode(cpu, &breakPoint)
-			if !isContinue {
-				break
-			}
-		} else {
-			ticks := cpu.Execute()
-			gpu.Update(ticks)
-		}
+		ticks := cpu.Execute()
+		gpu.Update(ticks)
+		// if cpu.GetPC() == breakPoint && !mmu.IsBooting {
+		// 	cpu.Dump()
+		// 	isContinue := debugMode(cpu, &breakPoint)
+		// 	if !isContinue {
+		// 		break
+		// 	}
+		// } else {
+		// 	ticks := cpu.Execute()
+		// 	gpu.Update(ticks)
+		// }
 
 	}
 
@@ -83,6 +87,7 @@ func update(screen *ebiten.Image) error {
 		return nil
 	}
 
+	// gpu.DisplayTileSets()
 	screen.ReplacePixels(gpu.Pixels)
 
 	msg := fmt.Sprintf("TPS = %0.2f\nFPS = %0.2f", ebiten.CurrentTPS(), ebiten.CurrentFPS())
@@ -92,6 +97,26 @@ func update(screen *ebiten.Image) error {
 }
 
 func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("Too few arguments. Please provide GameBoy ROM")
+		os.Exit(1)
+	}
+
+	fp, err := os.Open(os.Args[1])
+	if err != nil {
+		panic(err)
+	}
+	defer fp.Close()
+
+	buf := make([]byte, 0x10000)
+	nb, err := fp.Read(buf)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Successfully read %d byte\n", nb)
+
+	mmu.Load(buf)
+
 	if err := ebiten.Run(update, screenWidth, screenHeight, 2, "Game Boy Emulator"); err != nil {
 		log.Fatal(err)
 	}
