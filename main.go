@@ -83,7 +83,6 @@ func update(screen *ebiten.Image) error {
 		return nil
 	}
 
-	gpu.RenderFrame()
 	screen.ReplacePixels(gpu.Pixels)
 
 	msg := fmt.Sprintf("TPS = %0.2f\nFPS = %0.2f", ebiten.CurrentTPS(), ebiten.CurrentFPS())

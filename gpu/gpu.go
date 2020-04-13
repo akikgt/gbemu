@@ -3,6 +3,12 @@ package gpu
 const (
 	screenWidth  = 160
 	screenHeight = 144
+
+	// palette colors for Non CGB mode
+	white     uint8 = 0
+	ligthGray uint8 = 1
+	darkGray  uint8 = 2
+	black     uint8 = 3
 )
 
 type GPU struct {
@@ -10,18 +16,18 @@ type GPU struct {
 
 	vram [0x2000]uint8
 
-	lcdc        uint8 // 0xff40
-	stat        uint8 // 0xff41
-	mode        uint8 // 0xff41 bit 0-1
-	scy         uint8 // 0xff42
-	scx         uint8 // 0xff43
-	currentLine uint8 // 0xff44
-	lyc         uint8 // 0xff45
-	bgp         uint8 // 0xff47
-	obp0        uint8 // 0xff48
-	obp1        uint8 // 0xff49
-	wy          uint8 // 0xff4a
-	wx          uint8 // 0xff4b
+	lcdc uint8 // 0xff40
+	stat uint8 // 0xff41
+	mode uint8 // 0xff41 bit 0-1
+	scy  uint8 // 0xff42
+	scx  uint8 // 0xff43
+	ly   uint8 // 0xff44 current Y-coordinate
+	lyc  uint8 // 0xff45
+	bgp  uint8 // 0xff47 bg palette data
+	obp0 uint8 // 0xff48
+	obp1 uint8 // 0xff49
+	wy   uint8 // 0xff4a
+	wx   uint8 // 0xff4b
 
 	Pixels      []byte
 	frameBuffer []byte
@@ -31,24 +37,8 @@ type GPU struct {
 func New() *GPU {
 	gpu := &GPU{}
 
-	gpu.Pixels = make([]byte, screenHeight*screenWidth*4)
-	for y := 0; y < screenHeight; y++ {
-		for x := 0; x < screenWidth; x++ {
-			gpu.Pixels[(y*screenWidth+x)*4+0] = 0xff // R
-			gpu.Pixels[(y*screenWidth+x)*4+1] = 0xff // G
-			gpu.Pixels[(y*screenWidth+x)*4+2] = 0xff // B
-			gpu.Pixels[(y*screenWidth+x)*4+3] = 0xff // A
-		}
-	}
-	gpu.frameBuffer = make([]byte, screenHeight*screenWidth*4)
-	for y := 0; y < screenHeight; y++ {
-		for x := 0; x < screenWidth; x++ {
-			gpu.frameBuffer[(y*screenWidth+x)*4+0] = 0xff // R
-			gpu.frameBuffer[(y*screenWidth+x)*4+1] = 0xff // G
-			gpu.frameBuffer[(y*screenWidth+x)*4+2] = 0xff // B
-			gpu.frameBuffer[(y*screenWidth+x)*4+3] = 0xff // A
-		}
-	}
+	gpu.Pixels = make([]byte, screenHeight*screenWidth*4) // 4 = RGBA
+	gpu.ResetFrame()
 
 	return gpu
 }
@@ -64,8 +54,7 @@ func (gpu *GPU) ResetFrame() {
 	}
 }
 
-func (gpu *GPU) DisplayTileSets() {
-	// get tile sets
+func (gpu *GPU) updateTileSets() {
 	for i := 0; i < 384; i++ {
 
 		for y := 0; y < 8; y++ {
@@ -76,115 +65,87 @@ func (gpu *GPU) DisplayTileSets() {
 			for x := 0; x < 8; x++ {
 				b := 7 - x
 				color := (data2>>b&1)<<1 | (data1 >> b & 1)
-
 				gpu.tileSets[i][y][x] = color
 			}
-
 		}
 	}
+}
 
-	// display
+// DisplayTileSets displays all tile sets. It's only for debug mode
+func (gpu *GPU) DisplayTileSets() {
 	for y := 0; y < screenHeight; y++ {
 		for x := 0; x < screenWidth; x++ {
 			tileNum := (y/8)*(screenWidth/8) + x/8
-			color := gpu.tileSets[tileNum][y%8][x%8]
+			colorNum := gpu.tileSets[tileNum][y%8][x%8]
 
-			switch color {
-			case 0:
-				gpu.Pixels[(y*screenWidth+x)*4+0] = 0xff // R
-				gpu.Pixels[(y*screenWidth+x)*4+1] = 0xff // G
-				gpu.Pixels[(y*screenWidth+x)*4+2] = 0xff // B
-				gpu.Pixels[(y*screenWidth+x)*4+3] = 0xff // A
-			case 1:
-				gpu.Pixels[(y*screenWidth+x)*4+0] = 0x88 // R
-				gpu.Pixels[(y*screenWidth+x)*4+1] = 0xcc // G
-				gpu.Pixels[(y*screenWidth+x)*4+2] = 0x44 // B
-				gpu.Pixels[(y*screenWidth+x)*4+3] = 0xff // A
-			case 2:
-				gpu.Pixels[(y*screenWidth+x)*4+0] = 0x77 // R
-				gpu.Pixels[(y*screenWidth+x)*4+1] = 0x77 // G
-				gpu.Pixels[(y*screenWidth+x)*4+2] = 0x77 // B
-				gpu.Pixels[(y*screenWidth+x)*4+3] = 0xff // A
-			case 3:
-				gpu.Pixels[(y*screenWidth+x)*4+0] = 0x00 // R
-				gpu.Pixels[(y*screenWidth+x)*4+1] = 0x00 // G
-				gpu.Pixels[(y*screenWidth+x)*4+2] = 0x00 // B
-				gpu.Pixels[(y*screenWidth+x)*4+3] = 0xff // A
-			}
-
+			gpu.paintPixel(y*screenWidth+x, colorNum)
 		}
 	}
 }
 
-func (gpu *GPU) updateTileSets() {
-	for i := 0; i < 384; i++ {
-		for y := 0; y < 8; y++ {
-			// each tile data is 16 byte
-			data1 := gpu.vram[i*16+y*2]
-			data2 := gpu.vram[i*16+y*2+1]
-
-			for x := 0; x < 8; x++ {
-				b := 7 - x
-				color := (data2>>b&1)<<1 | (data1 >> b & 1)
-				gpu.tileSets[i][y][x] = color
-			}
-
-		}
-	}
-}
-
-func (gpu *GPU) RenderFrame() {
-	// for y := 0; y < screenHeight; y++ {
-	// 	for x := 0; x < screenWidth; x++ {
-	// 		fmt.Printf("%02x ", gpu.Pixels[(y*screenWidth+x)*4+0])
-	// 	}
-	// 	fmt.Printf("\n")
-	// }
-	gpu.Pixels = gpu.frameBuffer
-}
-
-func (gpu *GPU) RenderTiles() {
+func (gpu *GPU) renderTiles() {
 	var base uint16 = 0x1800
-	y := (gpu.scy + gpu.currentLine) & 255
+
+	y := (gpu.scy + gpu.ly) & 255
 	var tileRow uint16 = uint16(y/8) * 32
-	for px := 0; px < 160; px++ {
-		x := uint8(px) + gpu.scx
+
+	for lx := 0; lx < 160; lx++ {
+		x := uint16(lx) + uint16(gpu.scx)
 		tileCol := x / 8
-		tileAddr := base + tileRow + uint16(tileCol)
+		tileAddr := base + tileRow + tileCol
 		tileNum := gpu.vram[tileAddr]
 
-		// how to designate y affects scrolling logo...TODO: research
-		color := gpu.tileSets[tileNum][y%8][px%8]
+		// (y, x) is coordinate in 256 * 256 full background
+		colorNum := gpu.tileSets[tileNum][y%8][x%8]
 
-		pixel := int(gpu.currentLine)*screenWidth + int(px)
-		switch color {
-		case 0:
-			gpu.frameBuffer[pixel*4+0] = 0xff // R
-			gpu.frameBuffer[pixel*4+1] = 0xff // G
-			gpu.frameBuffer[pixel*4+2] = 0xff // B
-			gpu.frameBuffer[pixel*4+3] = 0xff // A
-		case 1:
-			gpu.frameBuffer[pixel*4+0] = 0x88 // R
-			gpu.frameBuffer[pixel*4+1] = 0xcc // G
-			gpu.frameBuffer[pixel*4+2] = 0x44 // B
-			gpu.frameBuffer[pixel*4+3] = 0xff // A
-		case 2:
-			gpu.frameBuffer[pixel*4+0] = 0x77 // R
-			gpu.frameBuffer[pixel*4+1] = 0x77 // G
-			gpu.frameBuffer[pixel*4+2] = 0x77 // B
-			gpu.frameBuffer[pixel*4+3] = 0xff // A
-		case 3:
-			gpu.frameBuffer[pixel*4+0] = 0x00 // R
-			gpu.frameBuffer[pixel*4+1] = 0x00 // G
-			gpu.frameBuffer[pixel*4+2] = 0x00 // B
-			gpu.frameBuffer[pixel*4+3] = 0xff // A
-		default:
-			gpu.frameBuffer[pixel*4+0] = 0xff // R
-			gpu.frameBuffer[pixel*4+1] = 0xff // G
-			gpu.frameBuffer[pixel*4+2] = 0xff // B
-			gpu.frameBuffer[pixel*4+3] = 0xff // A
-		}
+		// (ly, lx) is coordinate in 160 * 144 screen
+		coord := int(gpu.ly)*screenWidth + lx
+
+		gpu.paintPixel(coord, colorNum)
 	}
+}
+
+func (gpu *GPU) paintPixel(coord int, colorNum uint8) {
+	color := gpu.getColor(colorNum)
+
+	red, green, blue := getRGB(color)
+
+	gpu.Pixels[coord*4+0] = red   // R
+	gpu.Pixels[coord*4+1] = green // G
+	gpu.Pixels[coord*4+2] = blue  // B
+	gpu.Pixels[coord*4+3] = 0xff  // A
+}
+
+func (gpu *GPU) getColor(colorNum uint8) uint8 {
+	var color uint8
+
+	switch colorNum {
+	case 0:
+		color = gpu.bgp & 0x3
+	case 1:
+		color = (gpu.bgp & 0xc) >> 2
+	case 2:
+		color = (gpu.bgp & 0x30) >> 4
+	case 3:
+		color = (gpu.bgp & 0xc0) >> 6
+	}
+
+	return color
+}
+
+func getRGB(color uint8) (uint8, uint8, uint8) {
+	switch color {
+	case white:
+		return 0xff, 0xff, 0xff
+	case ligthGray:
+		return 0xcc, 0xcc, 0xcc
+	case darkGray:
+		return 0x77, 0x77, 0x77
+	case black:
+		return 0x00, 0x00, 0x00
+	}
+
+	return 0, 0, 0
 }
 
 func (gpu *GPU) Read(addr uint16) uint8 {
@@ -200,7 +161,7 @@ func (gpu *GPU) Read(addr uint16) uint8 {
 	case addr == 0xff43:
 		return gpu.scx
 	case addr == 0xff44:
-		return gpu.currentLine
+		return gpu.ly
 	case addr == 0xff45:
 		return gpu.lyc
 	case addr == 0xff47:
@@ -232,7 +193,7 @@ func (gpu *GPU) Write(addr uint16, val uint8) {
 	case addr == 0xff43:
 		gpu.scx = val
 	case addr == 0xff44:
-		gpu.currentLine = val
+		gpu.ly = val
 	case addr == 0xff45:
 		gpu.lyc = val
 	case addr == 0xff47:
@@ -262,7 +223,6 @@ func (gpu *GPU) Update(ticks uint8) {
 		if gpu.counter >= 80 {
 			gpu.counter -= 80
 			gpu.mode = 3
-			gpu.RenderTiles()
 		}
 
 	// accessing VRAM
@@ -276,16 +236,13 @@ func (gpu *GPU) Update(ticks uint8) {
 	case 0:
 		if gpu.counter >= 204 {
 			gpu.counter -= 204
-			gpu.currentLine++
+			gpu.ly++
 
-			if gpu.currentLine >= 143 {
-				// enter vblank mode
+			if gpu.ly >= 143 {
 				gpu.mode = 1
-				// TODO: complete screen update
-
 			} else {
-				// back to accessing OAM mode
 				gpu.mode = 2
+				gpu.renderTiles()
 			}
 		}
 
@@ -293,18 +250,17 @@ func (gpu *GPU) Update(ticks uint8) {
 	case 1:
 		if gpu.counter >= 456 {
 			gpu.counter -= 456
-			gpu.currentLine++
+			gpu.ly++
 
-			if gpu.currentLine > 153 {
-				// back to accessing OAM mode
+			if gpu.ly > 153 {
 				gpu.mode = 2
-				gpu.currentLine = 0
+				gpu.ly = 0
 			}
 		}
 
 	}
 
-	// fmt.Printf("ly: %d\n", gpu.currentLine)
+	// fmt.Printf("ly: %d\n", gpu.ly)
 	// fmt.Printf("scy: %d\n", gpu.scy)
 	// fmt.Printf("GPU counter: %d\n", gpu.counter)
 }
