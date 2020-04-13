@@ -130,7 +130,18 @@ func (gpu *GPU) getColor(colorNum uint8) uint8 {
 		color = (gpu.bgp & 0xc0) >> 6
 	}
 
-	return color
+	switch color {
+	case 0:
+		return white
+	case 1:
+		return ligthGray
+	case 2:
+		return darkGray
+	case 3:
+		return black
+	}
+
+	return white
 }
 
 func getRGB(color uint8) (uint8, uint8, uint8) {
