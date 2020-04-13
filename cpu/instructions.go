@@ -62,16 +62,16 @@ func checkCarry(a, b, c uint8) uint8 {
 
 func checkHalfBorrow(a, b, c uint8) uint8 {
 	if (a & 0xf) < (b&0xf + c) {
-		return RESET
+		return SET
 	}
-	return SET
+	return RESET
 }
 
 func checkBorrow(a, b, c uint8) uint8 {
 	if a < b+c {
-		return RESET
+		return SET
 	}
-	return SET
+	return RESET
 }
 
 func checkZero(a uint8) uint8 {
