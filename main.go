@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/ebitenutil"
 )
 
 func debugMode(cpu *c.CPU, breakPoint *uint16) bool {
@@ -59,15 +60,11 @@ var (
 
 func update(screen *ebiten.Image) error {
 
-	if ebiten.IsDrawingSkipped() {
-		return nil
-	}
-
 	// reset TotalTicks every update
 	cpu.TotalTicks = 0
 
 	for cpu.TotalTicks < maxTicks {
-		fmt.Printf("%#04x : ", cpu.GetPC())
+		// fmt.Printf("%#04x : ", cpu.GetPC())
 		// cpu.TestFlags()
 
 		if cpu.GetPC() == breakPoint {
@@ -82,7 +79,15 @@ func update(screen *ebiten.Image) error {
 
 	}
 
+	if ebiten.IsDrawingSkipped() {
+		return nil
+	}
+
+	gpu.RenderFrame()
 	screen.ReplacePixels(gpu.Pixels)
+
+	msg := fmt.Sprintf("TPS = %0.2f\nFPS = %0.2f", ebiten.CurrentTPS(), ebiten.CurrentFPS())
+	ebitenutil.DebugPrint(screen, msg)
 
 	return nil
 }

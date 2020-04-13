@@ -60,6 +60,7 @@ func (cpu *CPU) Dump() {
 	fmt.Printf("SP: %#04x\n", cpu.sp)
 	fmt.Printf("PC: %#04x\n", cpu.pc)
 	fmt.Printf("TotalTicks: %08d\n", cpu.TotalTicks)
+	fmt.Printf("scy: %08d\n", cpu.mmu.Read(0xff42))
 	fmt.Println("--------------------")
 }
 
