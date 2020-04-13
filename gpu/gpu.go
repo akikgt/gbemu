@@ -16,8 +16,8 @@ type GPU struct {
 
 	vram [0x2000]uint8
 
-	lcdc uint8 // 0xff40
-	stat uint8 // 0xff41
+	lcdc uint8 // 0xff40 LCD control
+	stat uint8 // 0xff41 LCDC status
 	mode uint8 // 0xff41 bit 0-1
 	scy  uint8 // 0xff42
 	scx  uint8 // 0xff43
@@ -149,30 +149,32 @@ func getRGB(color uint8) (uint8, uint8, uint8) {
 }
 
 func (gpu *GPU) Read(addr uint16) uint8 {
-	switch {
-	case 0x8000 <= addr && addr <= 0x9fff:
+	if 0x8000 <= addr && addr <= 0x9fff {
 		return gpu.vram[addr-0x8000]
-	case addr == 0xff40:
+	}
+
+	switch addr {
+	case 0xff40:
 		return gpu.lcdc
-	case addr == 0xff41:
+	case 0xff41:
 		return gpu.stat | gpu.mode
-	case addr == 0xff42:
+	case 0xff42:
 		return gpu.scy
-	case addr == 0xff43:
+	case 0xff43:
 		return gpu.scx
-	case addr == 0xff44:
+	case 0xff44:
 		return gpu.ly
-	case addr == 0xff45:
+	case 0xff45:
 		return gpu.lyc
-	case addr == 0xff47:
+	case 0xff47:
 		return gpu.bgp
-	case addr == 0xff48:
+	case 0xff48:
 		return gpu.obp0
-	case addr == 0xff49:
+	case 0xff49:
 		return gpu.obp1
-	case addr == 0xff4a:
+	case 0xff4a:
 		return gpu.wy
-	case addr == 0xff4b:
+	case 0xff4b:
 		return gpu.wx
 	}
 
@@ -180,42 +182,52 @@ func (gpu *GPU) Read(addr uint16) uint8 {
 }
 
 func (gpu *GPU) Write(addr uint16, val uint8) {
-	switch {
-	case 0x8000 <= addr && addr <= 0x9fff:
+
+	if 0x8000 <= addr && addr <= 0x9fff {
 		gpu.vram[addr-0x8000] = val
 		gpu.updateTileSets()
-	case addr == 0xff40:
+
+		return
+	}
+
+	switch addr {
+	case 0xff40:
 		gpu.lcdc = val
-	case addr == 0xff41:
-		gpu.stat = val & 0xfc // bit 1-0 are Read Only
-	case addr == 0xff42:
+	case 0xff41:
+		gpu.stat = val&0xf8 | gpu.stat&0x07 // bit 2-0 are Read Only
+	case 0xff42:
 		gpu.scy = val
-	case addr == 0xff43:
+	case 0xff43:
 		gpu.scx = val
-	case addr == 0xff44:
-		gpu.ly = val
-	case addr == 0xff45:
+	case 0xff44:
+		gpu.ly = 0 // ReadOnly. Writing will reset the counter
+	case 0xff45:
 		gpu.lyc = val
-	case addr == 0xff47:
+	case 0xff47:
 		gpu.bgp = val
-	case addr == 0xff48:
+	case 0xff48:
 		gpu.obp0 = val
-	case addr == 0xff49:
+	case 0xff49:
 		gpu.obp1 = val
-	case addr == 0xff4a:
+	case 0xff4a:
 		gpu.wy = val
-	case addr == 0xff4b:
+	case 0xff4b:
 		gpu.wx = val
 	}
 }
 
+func (gpu *GPU) isLCDEnabled() bool {
+	return gpu.lcdc&0x80 != 0
+}
+
 func (gpu *GPU) Update(ticks uint8) {
-	if gpu.lcdc&0x80 == 0 {
+	if !gpu.isLCDEnabled() {
 		return
 	}
 
 	gpu.counter += uint16(ticks)
 
+	// the mode goes through 2 -> 3 -> 0 -> ...
 	switch gpu.mode {
 
 	// accessing OAM
