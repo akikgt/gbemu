@@ -52,11 +52,11 @@ const (
 )
 
 var (
-	gpu        *g.GPU = g.New()
-	mmu        *m.MMU = m.New(gpu)
-	cpu        *c.CPU = c.New(mmu)
-	breakPoint uint16 = 0x100
-	// breakPoint uint16 = 0x282a // tetris end of tileset loading
+	gpu *g.GPU = g.New()
+	mmu *m.MMU = m.New(gpu)
+	cpu *c.CPU = c.New(mmu)
+	// breakPoint uint16 = 0x100
+	breakPoint uint16 = 0x282a // tetris end of tileset loading
 )
 
 func update(screen *ebiten.Image) error {

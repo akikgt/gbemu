@@ -89,17 +89,39 @@ func (gpu *GPU) DisplayTileSets() {
 	}
 }
 
+func (gpu *GPU) isWindowEnabled() bool {
+	return gpu.lcdc&0x20 != 0
+}
+
 func (gpu *GPU) renderTiles() {
-	var base uint16 = 0x1800
+	var base uint16
+	if gpu.isWindowEnabled() {
+		if gpu.lcdc&0x40 != 0 {
+			base = 0x1c00
+		} else {
+			base = 0x1800
+		}
+	} else {
+		if gpu.lcdc&0x08 != 0 {
+			base = 0x1c00
+		} else {
+			base = 0x1800
+		}
+	}
 
 	y := (gpu.scy + gpu.ly) & 255
-	var tileRow uint16 = uint16(y/8) * 32
+	var tileRow uint16 = uint16(y / 8)
 
 	for lx := 0; lx < 160; lx++ {
 		x := uint16(lx) + uint16(gpu.scx)
 		tileCol := x / 8
-		tileAddr := base + tileRow + tileCol
-		tileNum := gpu.vram[tileAddr]
+		tileAddr := base + tileRow*32 + tileCol
+		var tileNum uint16 = uint16(gpu.vram[tileAddr])
+
+		// select tile data 0=8800-97FF or 1=8000-8FFF
+		if gpu.lcdc&0x10 == 0 && tileNum < 128 {
+			tileNum += 256
+		}
 
 		// (y, x) is coordinate in 256 * 256 full background
 		colorNum := gpu.tileSets[tileNum][y%8][x%8]
