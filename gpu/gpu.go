@@ -44,6 +44,8 @@ func New() *GPU {
 	gpu.obp0 = 0xff
 	gpu.obp1 = 0xff
 
+	gpu.stat = 0x80
+
 	return gpu
 }
 
@@ -211,7 +213,9 @@ func (gpu *GPU) Write(addr uint16, val uint8) {
 	case 0xff40:
 		gpu.lcdc = val
 	case 0xff41:
-		gpu.stat = val&0xf8 | gpu.stat&0x07 // bit 2-0 are Read Only
+		// bit 2-0 are Read Only
+		// bit 7 is always set
+		gpu.stat = val&0xf8 | gpu.stat&0x07 | 1<<7
 	case 0xff42:
 		gpu.scy = val
 	case 0xff43:
@@ -237,6 +241,15 @@ func (gpu *GPU) Write(addr uint16, val uint8) {
 
 func (gpu *GPU) isLCDEnabled() bool {
 	return gpu.lcdc&0x80 != 0
+}
+
+func (gpu *GPU) compareLYC() {
+	// update stat bit-2 coincidence flag
+	if gpu.ly == gpu.lyc {
+		gpu.stat |= 1 << 2
+	} else {
+		gpu.stat &= ^(uint8(1 << 2))
+	}
 }
 
 func (gpu *GPU) Update(ticks uint8) {
@@ -291,6 +304,7 @@ func (gpu *GPU) Update(ticks uint8) {
 
 	}
 
+	gpu.compareLYC()
 	// fmt.Printf("ly: %d\n", gpu.ly)
 	// fmt.Printf("scy: %d\n", gpu.scy)
 	// fmt.Printf("GPU counter: %d\n", gpu.counter)

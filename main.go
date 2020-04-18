@@ -52,10 +52,10 @@ const (
 )
 
 var (
-	gpu *g.GPU = g.New()
-	mmu *m.MMU = m.New(gpu)
-	cpu *c.CPU = c.New(mmu)
-	// breakPoint uint16 = 0x100
+	gpu        *g.GPU = g.New()
+	mmu        *m.MMU = m.New(gpu)
+	cpu        *c.CPU = c.New(mmu)
+	breakPoint uint16 = 0x100
 	// breakPoint uint16 = 0x282a // tetris end of tileset loading
 )
 
@@ -68,18 +68,18 @@ func update(screen *ebiten.Image) error {
 		// fmt.Printf("%#04x : ", cpu.GetPC())
 		// cpu.TestFlags()
 
-		ticks := cpu.Execute()
-		gpu.Update(ticks)
-		// if cpu.GetPC() == breakPoint && !mmu.IsBooting {
-		// 	cpu.Dump()
-		// 	isContinue := debugMode(cpu, &breakPoint)
-		// 	if !isContinue {
-		// 		break
-		// 	}
-		// } else {
-		// 	ticks := cpu.Execute()
-		// 	gpu.Update(ticks)
-		// }
+		// ticks := cpu.Execute()
+		// gpu.Update(ticks)
+		if cpu.GetPC() == breakPoint && !mmu.IsBooting {
+			cpu.Dump()
+			isContinue := debugMode(cpu, &breakPoint)
+			if !isContinue {
+				break
+			}
+		} else {
+			ticks := cpu.Execute()
+			gpu.Update(ticks)
+		}
 
 	}
 
