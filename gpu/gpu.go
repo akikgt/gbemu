@@ -18,7 +18,6 @@ type GPU struct {
 
 	lcdc uint8 // 0xff40 LCD control
 	stat uint8 // 0xff41 LCDC status
-	mode uint8 // 0xff41 bit 0-1
 	scy  uint8 // 0xff42
 	scx  uint8 // 0xff43
 	ly   uint8 // 0xff44 current Y-coordinate
@@ -196,7 +195,7 @@ func (gpu *GPU) Read(addr uint16) uint8 {
 	case 0xff40:
 		return gpu.lcdc
 	case 0xff41:
-		return gpu.stat | gpu.mode
+		return gpu.stat
 	case 0xff42:
 		return gpu.scy
 	case 0xff43:
@@ -282,20 +281,20 @@ func (gpu *GPU) Update(ticks uint8) {
 	gpu.counter += uint16(ticks)
 
 	// the mode goes through 2 -> 3 -> 0 -> ...
-	switch gpu.mode {
+	switch gpu.stat & 0x03 {
 
 	// accessing OAM
 	case 2:
 		if gpu.counter >= 80 {
 			gpu.counter -= 80
-			gpu.mode = 3
+			gpu.stat = gpu.stat&0xf8 | 3
 		}
 
 	// accessing VRAM
 	case 3:
 		if gpu.counter >= 172 {
 			gpu.counter -= 172
-			gpu.mode = 0
+			gpu.stat = gpu.stat & 0xf8
 		}
 
 	// horizontal blank
@@ -305,9 +304,9 @@ func (gpu *GPU) Update(ticks uint8) {
 			gpu.ly++
 
 			if gpu.ly >= 143 {
-				gpu.mode = 1
+				gpu.stat = gpu.stat&0xf8 | 1
 			} else {
-				gpu.mode = 2
+				gpu.stat = gpu.stat&0xf8 | 2
 				gpu.renderTiles()
 			}
 		}
@@ -319,7 +318,7 @@ func (gpu *GPU) Update(ticks uint8) {
 			gpu.ly++
 
 			if gpu.ly > 153 {
-				gpu.mode = 2
+				gpu.stat = gpu.stat&0xf8 | 2
 				gpu.ly = 0
 			}
 		}
