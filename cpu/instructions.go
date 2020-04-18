@@ -380,7 +380,7 @@ func (cpu *CPU) JPccd16(cc string) {
 		return
 	}
 
-	cpu.pc = cpu.pc + nn
+	cpu.pc = nn
 	cpu.ticks += 16
 }
 
