@@ -1,6 +1,8 @@
 package mmu
 
-import "gbemu/gpu"
+import (
+	"gbemu/gpu"
+)
 
 type MMU struct {
 	bios      [0x100]uint8
@@ -67,6 +69,8 @@ func New(gpu *gpu.GPU) *MMU {
 
 	// TODO: ff44 means current scan line. update it dynamically
 	mmu.memory[0xff44] = 0x90
+	// TODO; ff00 means joypad
+	mmu.memory[0xff00] = 0xff
 
 	return mmu
 }
@@ -118,6 +122,10 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 
 	case 0xa000 <= addr && addr <= 0xbfff:
 		mmu.memory[addr] = val
+
+	case addr == 0xff00:
+		mmu.memory[addr] = val | 0xcf
+		return
 
 	case 0xff40 <= addr && addr <= 0xff4b:
 		if addr == 0xff46 {

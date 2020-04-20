@@ -57,7 +57,8 @@ var (
 	gpu        *g.GPU = g.New()
 	mmu        *m.MMU = m.New(gpu)
 	cpu        *c.CPU = c.New(mmu)
-	breakPoint uint16 = 0x02f9
+	breakPoint uint16 = 0x29fa
+	// 0x2a24 でff80の値が実機と違う
 	// after 0x034c tetris load all tiles
 	// breakPoint uint16 = 0x282a // tetris end of tileset loading
 )
@@ -71,6 +72,11 @@ func update(screen *ebiten.Image) error {
 		// if !mmu.IsBooting {
 		// 	fmt.Printf("%#04x : opcode is %#04x\n", cpu.GetPC(), mmu.Read(cpu.GetPC()))
 		// 	cpu.Dump()
+		// }
+		// if mmu.Read(0xff80) == 255 {
+		// 	fmt.Printf("%#04x : opcode is %#04x\n", cpu.GetPC(), mmu.Read(cpu.GetPC()))
+		// 	cpu.Dump()
+		// 	debugMode(cpu, &breakPoint)
 		// }
 
 		ticks := cpu.Execute()
