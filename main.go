@@ -54,10 +54,12 @@ const (
 )
 
 var (
-	gpu        *g.GPU = g.New()
-	mmu        *m.MMU = m.New(gpu)
-	cpu        *c.CPU = c.New(mmu)
-	breakPoint uint16 = 0x29fa
+	gpu *g.GPU = g.New()
+	mmu *m.MMU = m.New(gpu)
+	cpu *c.CPU = c.New(mmu)
+
+	breakPoint uint16 = 0x100
+	// breakPoint uint16 = 0x29fa
 	// 0x2a24 でff80の値が実機と違う
 	// after 0x034c tetris load all tiles
 	// breakPoint uint16 = 0x282a // tetris end of tileset loading
@@ -134,6 +136,9 @@ func main() {
 	// os.Exit(1)
 
 	mmu.Load(buf)
+
+	// for debug mode. Skip booting
+	cpu.Reset()
 
 	if err := ebiten.Run(update, screenWidth, screenHeight, 2, "Game Boy Emulator"); err != nil {
 		log.Fatal(err)
