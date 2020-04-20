@@ -97,10 +97,15 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 	case 0x4000 <= addr && addr <= 0x7fff:
 		return mmu.cartridge[addr]
 
+	// VRAM
 	case 0x8000 <= addr && addr <= 0x9fff:
 		return mmu.gpu.Read(addr)
 
 	case 0xff40 <= addr && addr <= 0xff4b:
+		return mmu.gpu.Read(addr)
+
+	// OAM
+	case 0xfe00 <= addr && addr <= 0xfe9f:
 		return mmu.gpu.Read(addr)
 
 	}
@@ -118,6 +123,7 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 		mmu.cartridge[addr] = val
 		return
 
+	// VRAM
 	case 0x8000 <= addr && addr <= 0x9fff:
 		mmu.gpu.Write(addr, val)
 		return
@@ -134,6 +140,11 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 			mmu.dmaTransfer(val)
 			return
 		}
+		mmu.gpu.Write(addr, val)
+		return
+
+	// OAM
+	case 0xfe00 <= addr && addr <= 0xfe9f:
 		mmu.gpu.Write(addr, val)
 		return
 
@@ -161,7 +172,7 @@ func (mmu *MMU) WriteWord(addr uint16, val uint16) {
 func (mmu *MMU) dmaTransfer(val uint8) {
 	var src uint16 = uint16(val) << 8
 	for i := 0; i < 0xa0; i++ {
-		mmu.Write(0xfe00+uint16(i), mmu.Read(src))
+		mmu.Write(0xfe00+uint16(i), mmu.Read(src+uint16(i)))
 	}
 }
 
