@@ -275,6 +275,11 @@ func (gpu *GPU) compareLYC() {
 
 func (gpu *GPU) Update(ticks uint8) {
 	if !gpu.isLCDEnabled() {
+		// when the lcd is disabled the mode must be set to 1
+		gpu.counter = 0
+		gpu.ly = 0
+		gpu.stat = gpu.stat&0xf8 | 1
+		gpu.compareLYC()
 		return
 	}
 
