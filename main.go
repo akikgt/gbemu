@@ -75,10 +75,9 @@ func update(screen *ebiten.Image) error {
 		// 	fmt.Printf("%#04x : opcode is %#04x\n", cpu.GetPC(), mmu.Read(cpu.GetPC()))
 		// 	cpu.Dump()
 		// }
-		// if mmu.Read(0xff80) == 255 {
-		// 	fmt.Printf("%#04x : opcode is %#04x\n", cpu.GetPC(), mmu.Read(cpu.GetPC()))
+		// pc := cpu.GetPC()
+		// if 0x0343 <= pc && pc < 0x0375 {
 		// 	cpu.Dump()
-		// 	debugMode(cpu, &breakPoint)
 		// }
 
 		ticks := cpu.Execute()

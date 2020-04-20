@@ -72,6 +72,8 @@ func New(gpu *gpu.GPU) *MMU {
 	// TODO; ff00 means joypad
 	mmu.memory[0xff00] = 0xff
 
+	mmu.memory[0xff0f] = 0xe0
+
 	return mmu
 }
 
@@ -134,6 +136,10 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 		}
 		mmu.gpu.Write(addr, val)
 		return
+
+	case addr == 0xff0f:
+		mmu.memory[addr] = val&0x1f | 0xe0
+		return
 	}
 
 	mmu.memory[addr] = val
@@ -171,4 +177,8 @@ func (mmu *MMU) UpdateIntFlag() {
 	}
 
 	mmu.Write(0xff0f, intFlag)
+}
+
+func (mmu *MMU) Test() {
+	mmu.gpu.Test()
 }

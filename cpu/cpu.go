@@ -92,6 +92,15 @@ func (cpu *CPU) Reset() {
 	cpu.mmu.Write(0xff4a, 0x00)
 	cpu.mmu.Write(0xff4b, 0x00)
 	cpu.mmu.Write(0xffff, 0x00)
+
+	// for testing ROM
+	// cpu.setReg16("AF", 0x1180)
+	// cpu.setReg16("BC", 0x0000)
+	// cpu.setReg16("DE", 0xff56)
+	// cpu.setReg16("HL", 0x000d)
+	// cpu.setReg16("SP", 0xfffe)
+	// cpu.mmu.Test()
+
 }
 
 func (cpu *CPU) Dump() {

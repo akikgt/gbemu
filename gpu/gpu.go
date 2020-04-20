@@ -367,3 +367,8 @@ func (gpu *GPU) Update(ticks uint8) {
 
 	gpu.compareLYC()
 }
+
+func (gpu *GPU) Test() {
+	gpu.stat = 0x81
+	gpu.ly = 0x90
+}
