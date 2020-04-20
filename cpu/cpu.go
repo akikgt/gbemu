@@ -124,3 +124,49 @@ func (cpu *CPU) FetchWord() uint16 {
 
 	return uint16(high)<<8 | uint16(low)
 }
+
+func (cpu *CPU) HandleInterrupts() {
+	if !cpu.isIntEnabled {
+		return
+	}
+
+	req := cpu.mmu.Read(0xff0f)
+	enabled := cpu.mmu.Read(0xffff)
+	if req == 0 {
+		return
+	}
+
+	// bit 0: V-Blank
+	// bit 1: LCD
+	// bit 2: Timer
+	// bit 3: Serial
+	// bit 4: Joypad
+	for i := 0; i < 5; i++ {
+		if req&(1<<i) > 0 && enabled&(1<<i) > 0 {
+			cpu.serviceInterrupt(i)
+		}
+	}
+}
+
+func (cpu *CPU) serviceInterrupt(interrupt int) {
+	cpu.isIntEnabled = false
+
+	// reset interrupt
+	req := cpu.mmu.Read(0xff0f)
+	req &= ^(uint8(1 << interrupt))
+	cpu.mmu.Write(0xff0f, req)
+
+	// save current pc
+	cpu.pushd16(cpu.pc)
+
+	switch interrupt {
+	case 0:
+		cpu.pc = 0x40
+	case 1:
+		cpu.pc = 0x48
+	case 2:
+		cpu.pc = 0x50
+	case 4:
+		cpu.pc = 0x60
+	}
+}
