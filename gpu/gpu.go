@@ -22,7 +22,6 @@ type GPU struct {
 	scx  uint8 // 0xff43
 	ly   uint8 // 0xff44 current Y-coordinate
 	lyc  uint8 // 0xff45
-	dma  uint8 // 0xff46
 	bgp  uint8 // 0xff47 bg palette data
 	obp0 uint8 // 0xff48
 	obp1 uint8 // 0xff49
@@ -204,8 +203,6 @@ func (gpu *GPU) Read(addr uint16) uint8 {
 		return gpu.ly
 	case 0xff45:
 		return gpu.lyc
-	case 0xff46:
-		return gpu.dma
 	case 0xff47:
 		return gpu.bgp
 	case 0xff48:
@@ -245,8 +242,6 @@ func (gpu *GPU) Write(addr uint16, val uint8) {
 		gpu.ly = 0 // ReadOnly. Writing will reset the counter
 	case 0xff45:
 		gpu.lyc = val
-	case 0xff46:
-		gpu.dma = val
 	case 0xff47:
 		gpu.bgp = val
 	case 0xff48:

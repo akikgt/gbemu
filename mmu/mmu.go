@@ -116,7 +116,14 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 		mmu.gpu.Write(addr, val)
 		return
 
+	case 0xa000 <= addr && addr <= 0xbfff:
+		mmu.memory[addr] = val
+
 	case 0xff40 <= addr && addr <= 0xff4b:
+		if addr == 0xff46 {
+			mmu.dmaTransfer(val)
+			return
+		}
 		mmu.gpu.Write(addr, val)
 		return
 	}
@@ -131,4 +138,15 @@ func (mmu *MMU) ReadWord(addr uint16) uint16 {
 func (mmu *MMU) WriteWord(addr uint16, val uint16) {
 	mmu.Write(addr, uint8(val&0xff))
 	mmu.Write(addr+1, uint8((val>>8)&0xff))
+}
+
+// DMA transfer
+// The written value specifies the transfer source address divided by 100h
+// src: XX00-XX9f
+// dst: fe00-fe9f
+func (mmu *MMU) dmaTransfer(val uint8) {
+	var src uint16 = uint16(val) << 8
+	for i := 0; i < 0xa0; i++ {
+		mmu.Write(0xfe00+uint16(i), mmu.Read(src))
+	}
 }
