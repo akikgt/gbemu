@@ -57,7 +57,7 @@ var (
 	gpu        *g.GPU = g.New()
 	mmu        *m.MMU = m.New(gpu)
 	cpu        *c.CPU = c.New(mmu)
-	breakPoint uint16 = 0x150
+	breakPoint uint16 = 0x1b6
 	// after 0x034c tetris load all tiles
 	// breakPoint uint16 = 0x282a // tetris end of tileset loading
 )
@@ -68,9 +68,9 @@ func update(screen *ebiten.Image) error {
 	cpu.TotalTicks = 0
 
 	for cpu.TotalTicks < maxTicks {
-		if !mmu.IsBooting {
-			fmt.Printf("%#04x : opcode is %#04x\n", cpu.GetPC(), mmu.Read(cpu.GetPC()))
-		}
+		// if !mmu.IsBooting {
+		// 	fmt.Printf("%#04x : opcode is %#04x\n", cpu.GetPC(), mmu.Read(cpu.GetPC()))
+		// }
 
 		ticks := cpu.Execute()
 		gpu.Update(ticks)

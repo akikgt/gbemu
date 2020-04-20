@@ -166,7 +166,7 @@ func (cpu *CPU) serviceInterrupt(interrupt int) {
 
 	fmt.Println("interrupt occured")
 	cpu.Dump()
-	cpu.TotalTicks += 12
+	// cpu.TotalTicks += 12
 
 	switch interrupt {
 	case 0:

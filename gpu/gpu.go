@@ -306,6 +306,8 @@ func (gpu *GPU) Update(ticks uint8) {
 		gpu.compareLYC()
 		return
 	}
+	gpu.ReqLCDInt = false
+	gpu.ReqVBlankInt = false
 
 	gpu.counter += uint16(ticks)
 
@@ -333,7 +335,7 @@ func (gpu *GPU) Update(ticks uint8) {
 			gpu.counter -= 204
 			gpu.ly++
 
-			if gpu.ly >= 143 {
+			if gpu.ly >= 144 {
 				// enter v-blank mode
 				gpu.stat = gpu.stat&0xf8 | 1
 				gpu.ReqVBlankInt = true
@@ -351,9 +353,11 @@ func (gpu *GPU) Update(ticks uint8) {
 			gpu.counter -= 456
 			gpu.ly++
 
-			if gpu.ly > 153 {
+			if gpu.ly >= 154 {
 				gpu.stat = gpu.stat&0xf8 | 2
 				gpu.ly = 0
+
+				gpu.updateLCDInterrupt()
 			}
 		}
 
