@@ -261,7 +261,7 @@ func (gpu *GPU) Write(addr uint16, val uint8) {
 }
 
 func (gpu *GPU) isLCDEnabled() bool {
-	return gpu.lcdc&0x80 != 0
+	return gpu.lcdc&0x80 > 0
 }
 
 func (gpu *GPU) compareLYC() {
@@ -325,8 +325,11 @@ func (gpu *GPU) Update(ticks uint8) {
 	case 3:
 		if gpu.counter >= 172 {
 			gpu.counter -= 172
+
 			gpu.stat = gpu.stat & 0xf8
 			gpu.updateLCDInterrupt()
+
+			gpu.renderTiles()
 		}
 
 	// horizontal blank
@@ -341,7 +344,6 @@ func (gpu *GPU) Update(ticks uint8) {
 				gpu.ReqVBlankInt = true
 			} else {
 				gpu.stat = gpu.stat&0xf8 | 2
-				gpu.renderTiles()
 			}
 
 			gpu.updateLCDInterrupt()
