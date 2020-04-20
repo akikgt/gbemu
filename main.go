@@ -58,7 +58,7 @@ var (
 	mmu *m.MMU = m.New(gpu)
 	cpu *c.CPU = c.New(mmu)
 
-	breakPoint uint16 = 0x100
+	breakPoint uint16 = 0x23e
 	// breakPoint uint16 = 0x29fa
 	// 0x2a24 でff80の値が実機と違う
 	// after 0x034c tetris load all tiles

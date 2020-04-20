@@ -15,6 +15,7 @@ type GPU struct {
 	counter uint16
 
 	vram [0x2000]uint8
+	oam  [0xa0]uint8
 
 	lcdc uint8 // 0xff40 LCD control
 	stat uint8 // 0xff41 LCDC status
@@ -94,6 +95,52 @@ func (gpu *GPU) DisplayTileSets() {
 
 func (gpu *GPU) isWindowEnabled() bool {
 	return gpu.lcdc&0x20 != 0 && gpu.wy <= gpu.ly
+}
+
+func (gpu *GPU) renderScanline() {
+	if gpu.lcdc&0x1 > 0 {
+		gpu.renderTiles()
+	}
+
+	if gpu.lcdc&0x2 > 0 {
+		gpu.renderSprites()
+	}
+}
+
+func (gpu *GPU) renderSprites() {
+	// TODO: render sprites
+
+	for i := 0; i < 40; i++ {
+		y := gpu.oam[i*4] - 16
+		x := gpu.oam[i*4+1] - 8
+		tileNum := gpu.oam[i*4+2]
+		// attributes := gpu.oam[i*4+3]
+
+		// fmt.Println(tileNum)
+
+		var height uint8 = 8
+		if gpu.lcdc&0x4 > 0 {
+			height = 16
+		}
+
+		// check current line includes sprite
+		if !(y <= gpu.ly && gpu.ly < y+height) {
+			return
+		}
+
+		tileY := gpu.ly - y
+
+		// fmt.Println(tileNum)
+		// fmt.Println(attributes)
+
+		for tileX := 0; tileX < 8; tileX++ {
+			colorNum := gpu.tileSets[tileNum][tileY%8][tileX%8]
+
+			coord := int(gpu.ly)*screenWidth + (int(x) + tileX)
+
+			gpu.paintPixel(coord, colorNum)
+		}
+	}
 }
 
 func (gpu *GPU) renderTiles() {
@@ -209,6 +256,10 @@ func (gpu *GPU) Read(addr uint16) uint8 {
 		return gpu.vram[addr-0x8000]
 	}
 
+	if 0xfe00 <= addr && addr <= 0xfe9f {
+		return gpu.oam[addr-0xfe00]
+	}
+
 	switch addr {
 	case 0xff40:
 		return gpu.lcdc
@@ -242,6 +293,12 @@ func (gpu *GPU) Write(addr uint16, val uint8) {
 	if 0x8000 <= addr && addr <= 0x9fff {
 		gpu.vram[addr-0x8000] = val
 		gpu.updateTileSets()
+
+		return
+	}
+
+	if 0xfe00 <= addr && addr <= 0xfe9f {
+		gpu.oam[addr-0xfe00] = val
 
 		return
 	}
@@ -345,7 +402,7 @@ func (gpu *GPU) Update(ticks uint8) {
 			gpu.stat = gpu.stat & 0xf8
 			gpu.updateLCDInterrupt()
 
-			gpu.renderTiles()
+			gpu.renderScanline()
 		}
 
 	// horizontal blank
