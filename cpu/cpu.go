@@ -45,7 +45,7 @@ func New(mmu *mmu.MMU) *CPU {
 
 	cpu.halt = false
 	cpu.stop = false
-	cpu.isIntEnabled = true
+	cpu.isIntEnabled = false
 
 	return cpu
 }
@@ -65,6 +65,8 @@ func (cpu *CPU) Dump() {
 	fmt.Printf("ly: %#02x\n", cpu.mmu.Read(0xff44))
 	fmt.Printf("lyc: %#02x\n", cpu.mmu.Read(0xff45))
 	fmt.Printf("instruction: %#02x\n", cpu.mmu.Read(cpu.pc))
+	fmt.Printf("ie %#02x\n", cpu.mmu.Read(0xffff))
+	fmt.Printf("if %#02x\n", cpu.mmu.Read(0xff0f))
 	fmt.Println("--------------------")
 	// fmt.Println("HRAM")
 	// fmt.Println("--------------------")
@@ -126,13 +128,16 @@ func (cpu *CPU) FetchWord() uint16 {
 }
 
 func (cpu *CPU) HandleInterrupts() {
+	cpu.mmu.UpdateIntFlag()
+
 	if !cpu.isIntEnabled {
 		return
 	}
 
-	req := cpu.mmu.Read(0xff0f)
-	enabled := cpu.mmu.Read(0xffff)
-	if req == 0 {
+	intFlag := cpu.mmu.Read(0xff0f)
+	intEnabled := cpu.mmu.Read(0xffff)
+
+	if intFlag == 0 {
 		return
 	}
 
@@ -142,7 +147,7 @@ func (cpu *CPU) HandleInterrupts() {
 	// bit 3: Serial
 	// bit 4: Joypad
 	for i := 0; i < 5; i++ {
-		if req&(1<<i) > 0 && enabled&(1<<i) > 0 {
+		if intFlag&(1<<i) > 0 && intEnabled&(1<<i) > 0 {
 			cpu.serviceInterrupt(i)
 		}
 	}
@@ -151,13 +156,17 @@ func (cpu *CPU) HandleInterrupts() {
 func (cpu *CPU) serviceInterrupt(interrupt int) {
 	cpu.isIntEnabled = false
 
-	// reset interrupt
-	req := cpu.mmu.Read(0xff0f)
-	req &= ^(uint8(1 << interrupt))
-	cpu.mmu.Write(0xff0f, req)
+	// reset interrupt flag
+	intFlag := cpu.mmu.Read(0xff0f)
+	intFlag &= ^(uint8(1 << interrupt))
+	cpu.mmu.Write(0xff0f, intFlag)
 
 	// save current pc
 	cpu.pushd16(cpu.pc)
+
+	fmt.Println("interrupt occured")
+	cpu.Dump()
+	cpu.TotalTicks += 12
 
 	switch interrupt {
 	case 0:
@@ -166,6 +175,8 @@ func (cpu *CPU) serviceInterrupt(interrupt int) {
 		cpu.pc = 0x48
 	case 2:
 		cpu.pc = 0x50
+	case 3:
+		cpu.pc = 0x58
 	case 4:
 		cpu.pc = 0x60
 	}

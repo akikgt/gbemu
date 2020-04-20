@@ -27,7 +27,9 @@ func debugMode(cpu *c.CPU, breakPoint *uint16) bool {
 		cpu.PrintNextIns()
 		return debugMode(cpu, breakPoint)
 	case "n":
-		cpu.Execute()
+		ticks := cpu.Execute()
+		gpu.Update(ticks)
+		cpu.HandleInterrupts()
 		*breakPoint = cpu.GetPC()
 		return true
 	case "c":
@@ -52,11 +54,12 @@ const (
 )
 
 var (
-	gpu *g.GPU = g.New()
-	mmu *m.MMU = m.New(gpu)
-	cpu *c.CPU = c.New(mmu)
-	// breakPoint uint16 = 0x100
-	breakPoint uint16 = 0x282a // tetris end of tileset loading
+	gpu        *g.GPU = g.New()
+	mmu        *m.MMU = m.New(gpu)
+	cpu        *c.CPU = c.New(mmu)
+	breakPoint uint16 = 0x150
+	// after 0x034c tetris load all tiles
+	// breakPoint uint16 = 0x282a // tetris end of tileset loading
 )
 
 func update(screen *ebiten.Image) error {
@@ -65,11 +68,15 @@ func update(screen *ebiten.Image) error {
 	cpu.TotalTicks = 0
 
 	for cpu.TotalTicks < maxTicks {
-		// fmt.Printf("%#04x : ", cpu.GetPC())
-		// cpu.TestFlags()
+		if !mmu.IsBooting {
+			fmt.Printf("%#04x : opcode is %#04x\n", cpu.GetPC(), mmu.Read(cpu.GetPC()))
+		}
 
-		// ticks := cpu.Execute()
-		// gpu.Update(ticks)
+		ticks := cpu.Execute()
+		gpu.Update(ticks)
+		cpu.HandleInterrupts()
+		continue
+
 		if cpu.GetPC() == breakPoint && !mmu.IsBooting {
 			cpu.Dump()
 			isContinue := debugMode(cpu, &breakPoint)
@@ -79,6 +86,7 @@ func update(screen *ebiten.Image) error {
 		} else {
 			ticks := cpu.Execute()
 			gpu.Update(ticks)
+			cpu.HandleInterrupts()
 		}
 
 	}
@@ -114,6 +122,9 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("Successfully read %d byte\n", nb)
+
+	// fmt.Println(hex.Dump(buf[:0x1fff]))
+	// os.Exit(1)
 
 	mmu.Load(buf)
 

@@ -28,9 +28,11 @@ type GPU struct {
 	wy   uint8 // 0xff4a
 	wx   uint8 // 0xff4b
 
-	Pixels      []byte
-	frameBuffer []byte
-	tileSets    [384][8][8]uint8
+	Pixels   []byte
+	tileSets [384][8][8]uint8
+
+	ReqVBlankInt bool
+	ReqLCDInt    bool
 }
 
 func New() *GPU {
@@ -43,6 +45,9 @@ func New() *GPU {
 	gpu.obp1 = 0xff
 
 	gpu.stat = 0x80
+
+	gpu.ReqVBlankInt = false
+	gpu.ReqLCDInt = false
 
 	return gpu
 }
@@ -263,8 +268,32 @@ func (gpu *GPU) compareLYC() {
 	// update stat bit-2 coincidence flag
 	if gpu.ly == gpu.lyc {
 		gpu.stat |= 1 << 2
+
+		if gpu.stat>>6&1 == 1 {
+			gpu.ReqLCDInt = true
+		}
+
 	} else {
 		gpu.stat &= ^(uint8(1 << 2))
+	}
+}
+
+func (gpu *GPU) updateLCDInterrupt() {
+	mode := gpu.stat & 0x3
+
+	switch mode {
+	case 0: // H-Blank interrupt
+		if gpu.stat>>3&1 == 1 {
+			gpu.ReqLCDInt = true
+		}
+	case 1: // V-Blank interrupt
+		if gpu.stat>>4&1 == 1 {
+			gpu.ReqLCDInt = true
+		}
+	case 2: // OAM interrupt
+		if gpu.stat>>5&1 == 1 {
+			gpu.ReqLCDInt = true
+		}
 	}
 }
 
@@ -295,6 +324,7 @@ func (gpu *GPU) Update(ticks uint8) {
 		if gpu.counter >= 172 {
 			gpu.counter -= 172
 			gpu.stat = gpu.stat & 0xf8
+			gpu.updateLCDInterrupt()
 		}
 
 	// horizontal blank
@@ -304,11 +334,15 @@ func (gpu *GPU) Update(ticks uint8) {
 			gpu.ly++
 
 			if gpu.ly >= 143 {
+				// enter v-blank mode
 				gpu.stat = gpu.stat&0xf8 | 1
+				gpu.ReqVBlankInt = true
 			} else {
 				gpu.stat = gpu.stat&0xf8 | 2
 				gpu.renderTiles()
 			}
+
+			gpu.updateLCDInterrupt()
 		}
 
 	// vertical blank
@@ -326,7 +360,4 @@ func (gpu *GPU) Update(ticks uint8) {
 	}
 
 	gpu.compareLYC()
-	// fmt.Printf("ly: %d\n", gpu.ly)
-	// fmt.Printf("scy: %d\n", gpu.scy)
-	// fmt.Printf("GPU counter: %d\n", gpu.counter)
 }

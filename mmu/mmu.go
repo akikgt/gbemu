@@ -150,3 +150,17 @@ func (mmu *MMU) dmaTransfer(val uint8) {
 		mmu.Write(0xfe00+uint16(i), mmu.Read(src))
 	}
 }
+
+func (mmu *MMU) UpdateIntFlag() {
+	intFlag := mmu.Read(0xff0f)
+
+	if mmu.gpu.ReqVBlankInt {
+		intFlag |= 1
+	}
+
+	if mmu.gpu.ReqLCDInt {
+		intFlag |= 1 << 1
+	}
+
+	mmu.Write(0xff0f, intFlag)
+}
