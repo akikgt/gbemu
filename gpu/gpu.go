@@ -93,7 +93,7 @@ func (gpu *GPU) DisplayTileSets() {
 }
 
 func (gpu *GPU) isWindowEnabled() bool {
-	return gpu.lcdc&0x20 != 0
+	return gpu.lcdc&0x20 != 0 && gpu.wy <= gpu.ly
 }
 
 func (gpu *GPU) renderTiles() {
@@ -112,11 +112,25 @@ func (gpu *GPU) renderTiles() {
 		}
 	}
 
-	y := (gpu.scy + gpu.ly) & 255
-	var tileRow uint16 = uint16(y / 8)
+	var y uint16
+	if gpu.isWindowEnabled() {
+		y = uint16(gpu.ly - gpu.wy)
+	} else {
+		y = uint16((gpu.scy + gpu.ly) & 255)
+	}
+
+	// var tileRow uint16 = uint16(y / 8)
+	tileRow := y / 8
 
 	for lx := 0; lx < 160; lx++ {
-		x := uint16(lx) + uint16(gpu.scx)
+
+		var x uint16
+		if gpu.isWindowEnabled() && lx >= int(gpu.wx-7) {
+			x = uint16(lx - int(gpu.wx-7))
+		} else {
+			x = uint16(lx) + uint16(gpu.scx)
+		}
+
 		tileCol := x / 8
 		tileAddr := base + tileRow*32 + tileCol
 		var tileNum uint16 = uint16(gpu.vram[tileAddr])
@@ -298,16 +312,18 @@ func (gpu *GPU) updateLCDInterrupt() {
 }
 
 func (gpu *GPU) Update(ticks uint8) {
+	gpu.ReqLCDInt = false
+	gpu.ReqVBlankInt = false
+
 	if !gpu.isLCDEnabled() {
 		// when the lcd is disabled the mode must be set to 1
 		gpu.counter = 0
 		gpu.ly = 0
 		gpu.stat = gpu.stat&0xf8 | 1
-		gpu.compareLYC()
+		// gpu.ReqVBlankInt = true
+		// gpu.compareLYC()
 		return
 	}
-	gpu.ReqLCDInt = false
-	gpu.ReqVBlankInt = false
 
 	gpu.counter += uint16(ticks)
 
