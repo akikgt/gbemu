@@ -878,7 +878,7 @@ func (cpu *CPU) SWAPr8(reg string) {
 func (cpu *CPU) RLCr8(reg string) {
 	val := cpu.getd8(reg)
 
-	res := val << 1
+	res := val<<1 | val>>7&1
 
 	z := checkZero(res)
 
@@ -918,7 +918,7 @@ func (cpu *CPU) RLr8(reg string) {
 func (cpu *CPU) RRCr8(reg string) {
 	val := cpu.getd8(reg)
 
-	res := val >> 1
+	res := val>>1 | (val&1)<<7
 
 	z := checkZero(res)
 
