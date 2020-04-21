@@ -1,6 +1,7 @@
 package mmu
 
 import (
+	"fmt"
 	"gbemu/gpu"
 )
 
@@ -150,6 +151,10 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 
 	case addr == 0xff0f:
 		mmu.memory[addr] = val&0x1f | 0xe0
+		return
+
+	case addr == 0xff02 && val == 0x81:
+		fmt.Printf("%c", mmu.memory[0xff01])
 		return
 	}
 
