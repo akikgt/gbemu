@@ -45,7 +45,7 @@ func New() *GPU {
 	gpu.obp0 = 0xff
 	gpu.obp1 = 0xff
 
-	gpu.stat = 0x80
+	gpu.stat = 0x85
 
 	gpu.ReqVBlankInt = false
 	gpu.ReqLCDInt = false
@@ -378,7 +378,7 @@ func (gpu *GPU) Update(ticks uint8) {
 		gpu.ly = 0
 		gpu.stat = gpu.stat&0xf8 | 1
 		// gpu.ReqVBlankInt = true
-		// gpu.compareLYC()
+		gpu.compareLYC()
 		return
 	}
 
