@@ -41,7 +41,11 @@ func debugMode(cpu *c.CPU, breakPoint *uint16) bool {
 		// quit
 		return false
 	default:
-		return false
+		ticks := cpu.Execute()
+		gpu.Update(ticks)
+		cpu.HandleInterrupts()
+		*breakPoint = cpu.GetPC()
+		return true
 	}
 }
 
@@ -58,7 +62,7 @@ var (
 	mmu *m.MMU = m.New(gpu)
 	cpu *c.CPU = c.New(mmu)
 
-	breakPoint uint16 = 0x23e
+	breakPoint uint16 = 0xc073
 	// breakPoint uint16 = 0x29fa
 	// 0x2a24 でff80の値が実機と違う
 	// after 0x034c tetris load all tiles

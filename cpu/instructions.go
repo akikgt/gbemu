@@ -68,7 +68,7 @@ func checkHalfBorrow(a, b, c uint8) uint8 {
 }
 
 func checkBorrow(a, b, c uint8) uint8 {
-	if a < b+c {
+	if uint16(a) < uint16(b)+uint16(c) {
 		return SET
 	}
 	return RESET
@@ -507,15 +507,16 @@ func (cpu *CPU) ADDr8(reg string) {
 
 // ADCr8 add r8 + carry flag to A
 func (cpu *CPU) ADCr8(reg string) {
-	n := cpu.getd8(reg) + cpu.getFlag(C)
+	n := cpu.getd8(reg)
 	a := cpu.getReg8("A")
+	oldCarry := cpu.getFlag(C)
 
-	z := checkZero(a + n)
-	h := checkHalfCarry(a, n, 0)
-	c := checkCarry(a, n, 0)
+	z := checkZero((n + a + oldCarry))
+	h := checkHalfCarry(a, n, oldCarry)
+	c := checkCarry(a, n, oldCarry)
 	cpu.setFlags(z, RESET, h, c)
 
-	cpu.setReg8("A", a+n)
+	cpu.setReg8("A", a+n+oldCarry)
 
 	logger.Log("ADC %s(n=%#02x)\n", reg, n)
 }
@@ -537,15 +538,16 @@ func (cpu *CPU) SUBr8(reg string) {
 
 // SBCr8 subtract r8 + carry flag from A
 func (cpu *CPU) SBCr8(reg string) {
-	n := cpu.getd8(reg) + cpu.getFlag(C)
+	n := cpu.getd8(reg)
 	a := cpu.getReg8("A")
+	oldCarry := cpu.getFlag(C)
 
-	z := checkZero(a - n)
-	h := checkHalfBorrow(a, n, 0)
-	c := checkBorrow(a, n, 0)
+	z := checkZero(a - n - oldCarry)
+	h := checkHalfBorrow(a, n, oldCarry)
+	c := checkBorrow(a, n, oldCarry)
 	cpu.setFlags(z, SET, h, c)
 
-	cpu.setReg8("A", a-n)
+	cpu.setReg8("A", a-n-oldCarry)
 
 	logger.Log("SUB %s(=%#02x)\n", reg, n)
 }
@@ -600,7 +602,7 @@ func (cpu *CPU) INCr8(reg string) {
 	h := checkHalfCarry(n, 1, 0)
 	cpu.setFlags(z, RESET, h, NA)
 
-	cpu.setReg8(reg, n+1)
+	cpu.setd8(reg, n+1)
 
 	logger.Log("INC %s\n", reg)
 }
@@ -613,7 +615,7 @@ func (cpu *CPU) DECr8(reg string) {
 	h := checkHalfBorrow(n, 1, 0)
 	cpu.setFlags(z, SET, h, NA)
 
-	cpu.setReg8(reg, n-1)
+	cpu.setd8(reg, n-1)
 
 	logger.Log("DEC %s\n", reg)
 }
@@ -881,7 +883,7 @@ func (cpu *CPU) RLCr8(reg string) {
 	z := checkZero(res)
 
 	var c uint8 = RESET
-	if val>>7 == 1 {
+	if val&0x80 > 0 {
 		c = SET
 	}
 

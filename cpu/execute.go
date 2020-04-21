@@ -365,7 +365,7 @@ func (cpu *CPU) Execute() uint8 {
 		reg := parseReg(opcode)
 		cpu.SBCr8(reg)
 	case 0xde:
-		cpu.ADCr8("#")
+		cpu.SBCr8("#")
 
 	// AND n
 	case 0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7:
