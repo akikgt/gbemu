@@ -411,13 +411,18 @@ func (cpu *CPU) CALLd16() {
 func (cpu *CPU) CALLccd16(cc string) {
 	logger.Log("CALL %s\n", cc)
 
+	jumpTo := cpu.FetchWord()
+
 	if !cpu.checkCurrentCondition(cc) {
 		cpu.ticks += 12
 		return
 	}
 
 	logger.Log("cc is true\n")
-	cpu.CALLd16()
+
+	cpu.pushd16(cpu.pc)
+
+	cpu.pc = jumpTo
 
 	cpu.ticks += 24
 }
@@ -709,7 +714,7 @@ func (cpu *CPU) RRCA() {
 	}
 	cpu.setFlags(z, RESET, RESET, c)
 
-	cpu.setReg8("A", a)
+	cpu.setReg8("A", res)
 
 	logger.Log("RRCA\n")
 }
@@ -727,7 +732,7 @@ func (cpu *CPU) RRA() {
 	}
 	cpu.setFlags(z, RESET, RESET, c)
 
-	cpu.setReg8("A", a)
+	cpu.setReg8("A", res)
 
 	logger.Log("RRCA\n")
 }
