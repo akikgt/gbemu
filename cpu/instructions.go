@@ -703,39 +703,31 @@ func (cpu *CPU) DECr16(reg string) {
 // Rotate & Shifts
 //======================================================================
 
-// RRCA rotate A right. old bit 0 to carry flag.
+// RLCA rotate A left, reset zero flag
+func (cpu *CPU) RLCA() {
+	cpu.RLCr8("A")
+	cpu.setFlags(RESET, RESET, RESET, NA)
+	logger.Log("RLCA\n")
+}
+
+// RLA rotate A, reset zero flag
+func (cpu *CPU) RLA() {
+	cpu.RLr8("A")
+	cpu.setFlags(RESET, RESET, RESET, NA)
+	logger.Log("RLA\n")
+}
+
+// RRCA rotate A right. old bit 0 to carry flag. reset zero flag
 func (cpu *CPU) RRCA() {
-	a := cpu.getReg8("A")
-
-	res := a >> 1
-
-	z := checkZero(res)
-	var c uint8 = RESET
-	if a&1 == 1 {
-		c = SET
-	}
-	cpu.setFlags(z, RESET, RESET, c)
-
-	cpu.setReg8("A", res)
-
+	cpu.RRCr8("A")
+	cpu.setFlags(RESET, RESET, RESET, NA)
 	logger.Log("RRCA\n")
 }
 
-// RRA rotte A right through carry flag
+// RRA rotte A right through carry flag. reset zero flag
 func (cpu *CPU) RRA() {
-	a := cpu.getReg8("A")
-
-	res := a>>1 | cpu.getFlag(C)<<7
-
-	z := checkZero(res)
-	var c uint8 = RESET
-	if a&1 == 1 {
-		c = SET
-	}
-	cpu.setFlags(z, RESET, RESET, c)
-
-	cpu.setReg8("A", res)
-
+	cpu.RRr8("A")
+	cpu.setFlags(RESET, RESET, RESET, NA)
 	logger.Log("RRCA\n")
 }
 

@@ -331,9 +331,9 @@ func (cpu *CPU) Execute() uint8 {
 	// 8-bit ALU
 	// Rotate & Shifts
 	case 0x07:
-		cpu.RLCr8("A")
+		cpu.RLCA()
 	case 0x17:
-		cpu.RLr8("A")
+		cpu.RLA()
 	case 0x0f:
 		cpu.RRCA()
 	case 0x1f:
