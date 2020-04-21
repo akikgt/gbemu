@@ -77,7 +77,7 @@ func (cpu *CPU) setReg8(reg string, val byte) {
 	case "A":
 		cpu.a = val
 	case "F":
-		cpu.f = val
+		cpu.f = val & 0xf0
 	case "B":
 		cpu.b = val
 	case "C":
@@ -113,7 +113,7 @@ func (cpu *CPU) setReg16(reg string, val uint16) {
 	switch reg {
 	case "AF":
 		cpu.a = byte(val >> 8 & 0xff)
-		cpu.f = byte(val & 0xff)
+		cpu.f = byte(val & 0xf0)
 	case "BC":
 		cpu.b = byte(val >> 8 & 0xff)
 		cpu.c = byte(val & 0xff)
