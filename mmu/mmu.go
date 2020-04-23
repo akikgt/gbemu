@@ -73,7 +73,7 @@ func New(gpu *gpu.GPU) *MMU {
 	// TODO; ff00 means joypad
 	mmu.memory[0xff00] = 0xff
 
-	mmu.memory[0xff0f] = 0xe0
+	mmu.memory[0xff0f] = 0xe1
 
 	return mmu
 }
