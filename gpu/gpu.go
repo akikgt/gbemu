@@ -88,7 +88,7 @@ func (gpu *GPU) DisplayTileSets() {
 			tileNum := (y/8)*(screenWidth/8) + x/8
 			colorNum := gpu.tileSets[tileNum][y%8][x%8]
 
-			gpu.paintPixel(y*screenWidth+x, colorNum)
+			gpu.paintPixel(y*screenWidth+x, colorNum, gpu.bgp)
 		}
 	}
 }
@@ -138,7 +138,8 @@ func (gpu *GPU) renderSprites() {
 
 			coord := int(gpu.ly)*screenWidth + (int(x) + tileX)
 
-			gpu.paintPixel(coord, colorNum)
+			// TODO: chnage palette based on current attributes
+			gpu.paintPixel(coord, colorNum, gpu.obp1)
 		}
 	}
 }
@@ -193,12 +194,12 @@ func (gpu *GPU) renderTiles() {
 		// (ly, lx) is coordinate in 160 * 144 screen
 		coord := int(gpu.ly)*screenWidth + lx
 
-		gpu.paintPixel(coord, colorNum)
+		gpu.paintPixel(coord, colorNum, gpu.bgp)
 	}
 }
 
-func (gpu *GPU) paintPixel(coord int, colorNum uint8) {
-	color := gpu.getColor(colorNum)
+func (gpu *GPU) paintPixel(coord int, colorNum uint8, palette uint8) {
+	color := gpu.getColor(colorNum, palette)
 
 	red, green, blue := getRGB(color)
 
@@ -208,18 +209,18 @@ func (gpu *GPU) paintPixel(coord int, colorNum uint8) {
 	gpu.Pixels[coord*4+3] = 0xff  // A
 }
 
-func (gpu *GPU) getColor(colorNum uint8) uint8 {
+func (gpu *GPU) getColor(colorNum, palette uint8) uint8 {
 	var color uint8
 
 	switch colorNum {
 	case 0:
-		color = gpu.bgp & 0x3
+		color = palette & 0x3
 	case 1:
-		color = (gpu.bgp & 0xc) >> 2
+		color = (palette & 0xc) >> 2
 	case 2:
-		color = (gpu.bgp & 0x30) >> 4
+		color = (palette & 0x30) >> 4
 	case 3:
-		color = (gpu.bgp & 0xc0) >> 6
+		color = (palette & 0xc0) >> 6
 	}
 
 	switch color {
