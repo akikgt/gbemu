@@ -737,28 +737,42 @@ func (cpu *CPU) RRA() {
 
 // DAA decimal adjust register A for Binary Coded Decimal
 func (cpu *CPU) DAA() {
-	a := cpu.getReg8("A")
+	a := uint16(cpu.getReg8("A"))
 
-	var c uint8 = RESET
-	low := a & 0xf
-	if low >= 10 {
-		low -= 10
-		c = SET
+	var c uint8 = NA
+
+	// convert hex value to decimal value
+	// example:
+	// 0xa + 0x6 = 0x10
+	// 0xb + 0x6 = 0x11
+	// 'a'(decimal 10) is now converted to 0
+	//
+	// if carry or half carry flag is set, that means 0 = 16 or 1 = 17
+	// so in this case, also add 0x6
+	if cpu.getFlag(N) == 1 {
+		// last operation was subtraction
+		if cpu.getFlag(H) == 1 {
+			a -= 0x6
+		}
+		if cpu.getFlag(C) == 1 {
+			a -= 0x60
+		}
+	} else {
+		// last operation was addition
+		if cpu.getFlag(H) == 1 || a&0xf > 0x9 {
+			a += 0x6
+		}
+		if cpu.getFlag(C) == 1 || a > 0x9f {
+			a += 0x60
+			c = SET
+		}
 	}
 
-	high := a>>4 + c
-	if high >= 10 {
-		high -= 10
-		c = SET
-	}
-
-	res := high<<4 | low
-
-	z := checkZero(res)
+	z := checkZero(uint8(a & 0xff))
 
 	cpu.setFlags(z, NA, RESET, c)
 
-	cpu.setReg8("A", res)
+	cpu.setReg8("A", uint8(a&0xff))
 
 	logger.Log("DAA\n")
 }
