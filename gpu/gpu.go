@@ -114,7 +114,7 @@ func (gpu *GPU) renderSprites() {
 		y := gpu.oam[i*4] - 16
 		x := gpu.oam[i*4+1] - 8
 		tileNum := gpu.oam[i*4+2]
-		// attributes := gpu.oam[i*4+3]
+		attributes := gpu.oam[i*4+3]
 
 		// fmt.Println(tileNum)
 
@@ -136,10 +136,20 @@ func (gpu *GPU) renderSprites() {
 		for tileX := 0; tileX < 8; tileX++ {
 			colorNum := gpu.tileSets[tileNum][tileY%8][tileX%8]
 
+			// for sprites, colorNum 0 means transparent
+			if colorNum == 0 {
+				continue
+			}
+
 			coord := int(gpu.ly)*screenWidth + (int(x) + tileX)
 
-			// TODO: chnage palette based on current attributes
-			gpu.paintPixel(coord, colorNum, gpu.obp1)
+			// change palette based on the attribute bit4
+			palette := gpu.obp0
+			if attributes>>4&1 == 1 {
+				palette = gpu.obp1
+			}
+
+			gpu.paintPixel(coord, colorNum, palette)
 		}
 	}
 }
