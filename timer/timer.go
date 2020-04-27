@@ -1,5 +1,7 @@
 package timer
 
+import "fmt"
+
 type Timer struct {
 	div  uint8 // 0xff04
 	tima uint8 // 0xff05
@@ -77,6 +79,13 @@ func (timer *Timer) updateDiv(ticks uint8) {
 		timer.dividerCounter = 0
 		timer.div++
 	}
+}
+
+func (timer *Timer) PrintState() {
+	fmt.Println(timer.timerCounter)
+	fmt.Println(timer.tima)
+	fmt.Println(timer.dividerCounter)
+	fmt.Println(timer.ReqTimerInt)
 }
 
 func (timer *Timer) Update(ticks uint8) {

@@ -186,12 +186,15 @@ func (cpu *CPU) FetchWord() uint16 {
 func (cpu *CPU) HandleInterrupts() {
 	cpu.mmu.UpdateIntFlag()
 
-	if !cpu.isIntEnabled {
-		return
-	}
-
 	intFlag := cpu.mmu.Read(0xff0f)
 	intEnabled := cpu.mmu.Read(0xffff)
+
+	if !cpu.isIntEnabled {
+		if cpu.halt && intFlag&intEnabled > 0 {
+			cpu.halt = false
+		}
+		return
+	}
 
 	if intFlag == 0 {
 		return
@@ -211,6 +214,7 @@ func (cpu *CPU) HandleInterrupts() {
 
 func (cpu *CPU) serviceInterrupt(interrupt int) {
 	cpu.isIntEnabled = false
+	cpu.halt = false
 
 	// reset interrupt flag
 	intFlag := cpu.mmu.Read(0xff0f)

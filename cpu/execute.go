@@ -85,6 +85,13 @@ func parseReg(opcode uint8) string {
 func (cpu *CPU) Execute() uint8 {
 	cpu.ticks = 0
 
+	if cpu.halt {
+		// add ticks
+		cpu.ticks += 4
+		cpu.TotalTicks += uint32(cpu.ticks)
+		return cpu.ticks
+	}
+
 	opcode := cpu.Fetch()
 
 	switch opcode {
