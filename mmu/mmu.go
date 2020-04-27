@@ -3,6 +3,7 @@ package mmu
 import (
 	"fmt"
 	"gbemu/gpu"
+	"gbemu/joypad"
 	"gbemu/timer"
 )
 
@@ -14,14 +15,16 @@ type MMU struct {
 
 	IsBooting bool
 
-	gpu   *gpu.GPU
-	timer *timer.Timer
+	gpu    *gpu.GPU
+	timer  *timer.Timer
+	joypad *joypad.Joypad
 }
 
-func New(gpu *gpu.GPU, timer *timer.Timer) *MMU {
+func New(gpu *gpu.GPU, timer *timer.Timer, joypad *joypad.Joypad) *MMU {
 	mmu := &MMU{
-		gpu:   gpu,
-		timer: timer,
+		gpu:    gpu,
+		timer:  timer,
+		joypad: joypad,
 	}
 
 	mmu.IsBooting = true
@@ -76,9 +79,6 @@ func New(gpu *gpu.GPU, timer *timer.Timer) *MMU {
 	// TODO: ff44 means current scan line. update it dynamically
 	mmu.memory[0xff44] = 0x90
 
-	// TODO; ff00 means joypad
-	mmu.memory[0xff00] = 0xff
-
 	mmu.memory[0xff0f] = 0xe1
 
 	return mmu
@@ -107,6 +107,10 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 	// VRAM
 	case 0x8000 <= addr && addr <= 0x9fff:
 		return mmu.gpu.Read(addr)
+
+	// joypad
+	case addr == 0xff00:
+		return mmu.joypad.Read()
 
 	// Timer
 	case 0xff04 <= addr && addr <= 0xff07:
@@ -145,7 +149,7 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 
 	// joypad
 	case addr == 0xff00:
-		mmu.memory[addr] = val | 0xcf
+		mmu.joypad.Write(val | 0xcf)
 		return
 
 	// Timer
@@ -212,6 +216,10 @@ func (mmu *MMU) UpdateIntFlag() {
 
 	if mmu.timer.ReqTimerInt {
 		intFlag |= 1 << 2
+	}
+
+	if mmu.joypad.ReqJoypadInt {
+		intFlag |= 1 << 4
 	}
 
 	mmu.Write(0xff0f, intFlag)

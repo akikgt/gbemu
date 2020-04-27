@@ -5,6 +5,7 @@ import (
 	"fmt"
 	c "gbemu/cpu"
 	g "gbemu/gpu"
+	j "gbemu/joypad"
 	m "gbemu/mmu"
 	t "gbemu/timer"
 	"log"
@@ -61,10 +62,11 @@ const (
 )
 
 var (
-	gpu   *g.GPU   = g.New()
-	timer *t.Timer = t.New()
-	mmu   *m.MMU   = m.New(gpu, timer)
-	cpu   *c.CPU   = c.New(mmu)
+	gpu    *g.GPU    = g.New()
+	timer  *t.Timer  = t.New()
+	joypad *j.Joypad = j.New()
+	mmu    *m.MMU    = m.New(gpu, timer, joypad)
+	cpu    *c.CPU    = c.New(mmu)
 
 	breakPoint uint16 = 0xc370
 	// breakPoint uint16 = 0x29fa
