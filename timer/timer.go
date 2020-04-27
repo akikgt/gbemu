@@ -99,18 +99,20 @@ func (timer *Timer) Update(ticks uint8) {
 
 	timer.timerCounter += uint16(ticks)
 
-	if timer.timerCounter < timer.getThreshold() {
-		return
-	}
+	// why use for loop instead of if statement?
+	// because if threshold == 16, the tick can be greater than 32
+	// That means updating timer event will occur multiple times by single instruction
+	threshold := timer.getThreshold()
+	for timer.timerCounter >= threshold {
+		// reset counter
+		timer.timerCounter -= threshold
 
-	// reset counter
-	timer.timerCounter = 0
-
-	// update tima
-	if timer.tima == 0xff {
-		timer.tima = timer.tma
-		timer.ReqTimerInt = true
-	} else {
-		timer.tima++
+		// update tima
+		if timer.tima == 0xff {
+			timer.tima = timer.tma
+			timer.ReqTimerInt = true
+		} else {
+			timer.tima++
+		}
 	}
 }

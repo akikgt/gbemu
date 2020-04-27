@@ -578,7 +578,7 @@ func (cpu *CPU) CBPrefixed() {
 	reg := parseReg(opcode)
 
 	if reg == "(HL)" {
-		if 0x40 <= opcode && 0x7f <= opcode {
+		if 0x40 <= opcode && opcode <= 0x7f {
 			cpu.ticks += 12
 		} else {
 			cpu.ticks += 16
