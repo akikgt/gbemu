@@ -6,6 +6,7 @@ import (
 	c "gbemu/cpu"
 	g "gbemu/gpu"
 	m "gbemu/mmu"
+	t "gbemu/timer"
 	"log"
 	"os"
 
@@ -29,6 +30,7 @@ func debugMode(cpu *c.CPU, breakPoint *uint16) bool {
 	case "n":
 		ticks := cpu.Execute()
 		gpu.Update(ticks)
+		timer.Update(ticks)
 		cpu.HandleInterrupts()
 		*breakPoint = cpu.GetPC()
 		return true
@@ -43,6 +45,7 @@ func debugMode(cpu *c.CPU, breakPoint *uint16) bool {
 	default:
 		ticks := cpu.Execute()
 		gpu.Update(ticks)
+		timer.Update(ticks)
 		cpu.HandleInterrupts()
 		*breakPoint = cpu.GetPC()
 		return true
@@ -58,9 +61,10 @@ const (
 )
 
 var (
-	gpu *g.GPU = g.New()
-	mmu *m.MMU = m.New(gpu)
-	cpu *c.CPU = c.New(mmu)
+	gpu   *g.GPU   = g.New()
+	timer *t.Timer = t.New()
+	mmu   *m.MMU   = m.New(gpu, timer)
+	cpu   *c.CPU   = c.New(mmu)
 
 	breakPoint uint16 = 0xc073
 	// breakPoint uint16 = 0x29fa
@@ -75,17 +79,10 @@ func update(screen *ebiten.Image) error {
 	cpu.TotalTicks = 0
 
 	for cpu.TotalTicks < maxTicks {
-		// if !mmu.IsBooting {
-		// 	fmt.Printf("%#04x : opcode is %#04x\n", cpu.GetPC(), mmu.Read(cpu.GetPC()))
-		// 	cpu.Dump()
-		// }
-		// pc := cpu.GetPC()
-		// if 0x0343 <= pc && pc < 0x0375 {
-		// 	cpu.Dump()
-		// }
 
 		ticks := cpu.Execute()
 		gpu.Update(ticks)
+		timer.Update(ticks)
 		cpu.HandleInterrupts()
 		continue
 
@@ -98,6 +95,7 @@ func update(screen *ebiten.Image) error {
 		} else {
 			ticks := cpu.Execute()
 			gpu.Update(ticks)
+			timer.Update(ticks)
 			cpu.HandleInterrupts()
 		}
 

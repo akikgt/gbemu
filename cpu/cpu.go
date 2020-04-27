@@ -220,8 +220,7 @@ func (cpu *CPU) serviceInterrupt(interrupt int) {
 	// save current pc
 	cpu.pushd16(cpu.pc)
 
-	// fmt.Println("interrupt occured")
-	// cpu.Dump()
+	// TODO: research. when interrupt occured, do I have to update ticks?
 	// cpu.TotalTicks += 12
 
 	switch interrupt {
