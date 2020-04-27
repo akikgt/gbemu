@@ -99,7 +99,7 @@ func (gpu *GPU) isWindowEnabled() bool {
 
 func (gpu *GPU) renderScanline() {
 	if gpu.lcdc&0x1 > 0 {
-		gpu.renderTiles()
+		gpu.renderBG()
 	}
 
 	if gpu.lcdc&0x2 > 0 {
@@ -108,7 +108,8 @@ func (gpu *GPU) renderScanline() {
 }
 
 func (gpu *GPU) renderSprites() {
-	// TODO: render sprites
+	// TODO:
+	// priority to background and sprites itself
 
 	for i := 0; i < 40; i++ {
 		y := gpu.oam[i*4] - 16
@@ -116,11 +117,16 @@ func (gpu *GPU) renderSprites() {
 		tileNum := gpu.oam[i*4+2]
 		attributes := gpu.oam[i*4+3]
 
-		// fmt.Println(tileNum)
-
 		var height uint8 = 8
 		if gpu.lcdc&0x4 > 0 {
+			// use 8x16 mode
 			height = 16
+			// modify tileNum
+			//
+			// In 8x16 mode, the lower bit of the tile number is ignored.
+			// Ie. the upper 8x8 tile is "NN AND FEh", and the lower 8x8 tile is "NN OR 01h".
+			// reference: pandoc. (https://bgb.bircd.org/pandocs.htm#powerupsequence)
+			tileNum &= 0xfe
 		}
 
 		// check current line includes sprite
@@ -129,11 +135,23 @@ func (gpu *GPU) renderSprites() {
 		}
 
 		tileY := gpu.ly - y
+		// Y flip
+		if attributes>>6&1 == 1 {
+			tileY = height - tileY - 1
+		}
 
-		// fmt.Println(tileNum)
-		// fmt.Println(attributes)
+		// 8x16mode: check the tile is upper 8x8 tile or lower?
+		// if lower(tileY == 8 - 15), add 1 to tileNum
+		if tileY > 7 {
+			tileNum |= 1
+		}
 
 		for tileX := 0; tileX < 8; tileX++ {
+			// X flip
+			if attributes>>5&1 == 1 {
+				tileX = 8 - tileX - 1
+			}
+
 			colorNum := gpu.tileSets[tileNum][tileY%8][tileX%8]
 
 			// for sprites, colorNum 0 means transparent
@@ -154,7 +172,7 @@ func (gpu *GPU) renderSprites() {
 	}
 }
 
-func (gpu *GPU) renderTiles() {
+func (gpu *GPU) renderBG() {
 	var base uint16
 	if gpu.isWindowEnabled() {
 		if gpu.lcdc&0x40 != 0 {
