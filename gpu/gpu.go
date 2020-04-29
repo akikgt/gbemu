@@ -131,7 +131,7 @@ func (gpu *GPU) renderSprites() {
 
 		// check current line includes sprite
 		if !(y <= gpu.ly && gpu.ly < y+height) {
-			return
+			continue
 		}
 
 		tileY := gpu.ly - y
