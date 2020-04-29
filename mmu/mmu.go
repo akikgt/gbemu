@@ -149,7 +149,7 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 
 	// joypad
 	case addr == 0xff00:
-		mmu.joypad.Write(val | 0xcf)
+		mmu.joypad.Write(val)
 		return
 
 	// Timer
@@ -220,6 +220,7 @@ func (mmu *MMU) UpdateIntFlag() {
 
 	if mmu.joypad.ReqJoypadInt {
 		intFlag |= 1 << 4
+		mmu.joypad.ReqJoypadInt = false
 	}
 
 	mmu.Write(0xff0f, intFlag)
