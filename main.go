@@ -130,7 +130,6 @@ func update(screen *ebiten.Image) error {
 		joypad.KeyPress(j.B)
 	} else if ebiten.IsKeyPressed(ebiten.KeyA) {
 		joypad.KeyPress(j.A)
-		// fmt.Printf("%02x\n", joypad.Read())
 	} else {
 		joypad.KeyRelease(j.DOWN)
 		joypad.KeyRelease(j.UP)
@@ -142,8 +141,6 @@ func update(screen *ebiten.Image) error {
 		joypad.KeyRelease(j.A)
 		joypad.ReqJoypadInt = false
 	}
-
-	cpu.Dump()
 
 	// joypad.ReqJoypadInt = false
 	// if inpututil.IsKeyJustPressed(ebiten.KeyJ) {
@@ -217,7 +214,7 @@ func main() {
 	// for debug mode. Skip booting
 	cpu.Reset()
 
-	if err := ebiten.Run(update, screenWidth, screenHeight, 2, "Game Boy Emulator"); err != nil {
+	if err := ebiten.Run(update, screenWidth, screenHeight, 3, "Game Boy Emulator"); err != nil {
 		log.Fatal(err)
 	}
 }

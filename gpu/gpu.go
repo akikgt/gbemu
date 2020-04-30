@@ -146,10 +146,11 @@ func (gpu *GPU) renderSprites() {
 			tileNum |= 1
 		}
 
-		for tileX := 0; tileX < 8; tileX++ {
+		for lx := 0; lx < 8; lx++ {
 			// X flip
+			tileX := lx
 			if attributes>>5&1 == 1 {
-				tileX = 8 - tileX - 1
+				tileX = 7 - tileX
 			}
 
 			colorNum := gpu.tileSets[tileNum][tileY%8][tileX%8]
@@ -159,7 +160,13 @@ func (gpu *GPU) renderSprites() {
 				continue
 			}
 
-			coord := int(gpu.ly)*screenWidth + (int(x) + tileX)
+			coord := int(gpu.ly)*screenWidth + (int(x) + lx)
+
+			// TODO: priority. Dr.mario menu uses it.
+			// if attributes>>7&1 == 1 {
+			// check priority
+			// 	continue
+			// }
 
 			// change palette based on the attribute bit4
 			palette := gpu.obp0
@@ -402,12 +409,12 @@ func (gpu *GPU) Update(ticks uint8) {
 	gpu.ReqVBlankInt = false
 
 	if !gpu.isLCDEnabled() {
-		// when the lcd is disabled the mode must be set to 1
+		// reference: https://www.reddit.com/r/Gameboy/comments/a1c8h0/what_happens_when_a_gameboy_screen_is_disabled/
 		gpu.counter = 0
 		gpu.ly = 0
-		gpu.stat = gpu.stat&0xf8 | 1
-		// gpu.ReqVBlankInt = true
-		gpu.compareLYC()
+		gpu.stat = gpu.stat & 0xf8 // enter mode 0.
+		// http://www.codeslinger.co.uk/pages/projects/gameboy/lcd.html
+		// says the mode should be 1. but I found Dr.mario won't past the menu if I set it to 1
 		return
 	}
 
