@@ -11,7 +11,8 @@ type MMU struct {
 	bios      [0x100]uint8
 	cartridge []byte
 
-	memory [0x10000]uint8
+	memory   [0x10000]uint8
+	ramBanks [0x8000]uint8
 
 	IsBooting bool
 
@@ -94,6 +95,7 @@ func (mmu *MMU) Load(buf []byte) {
 	mmu.cartridgeType = mmu.getCartridgeType()
 
 	mmu.currentROMBank = 1
+	mmu.currentRAMBank = 0
 }
 
 func (mmu *MMU) getCartridgeType() uint8 {
@@ -129,6 +131,14 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 	case 0x8000 <= addr && addr <= 0x9fff:
 		return mmu.gpu.Read(addr)
 
+	// Cartridge RAM memory bank
+	case 0xa000 <= addr && addr <= 0xbfff:
+		return mmu.ramBanks[(addr-0xa000)+uint16(mmu.currentRAMBank)*0x2000]
+
+	// OAM
+	case 0xfe00 <= addr && addr <= 0xfe9f:
+		return mmu.gpu.Read(addr)
+
 	// joypad
 	case addr == 0xff00:
 		return mmu.joypad.Read()
@@ -140,11 +150,6 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 	// LCD
 	case 0xff40 <= addr && addr <= 0xff4b:
 		return mmu.gpu.Read(addr)
-
-	// OAM
-	case 0xfe00 <= addr && addr <= 0xfe9f:
-		return mmu.gpu.Read(addr)
-
 	}
 
 	return mmu.memory[addr]
@@ -166,7 +171,12 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 		return
 
 	case 0xa000 <= addr && addr <= 0xbfff:
-		mmu.memory[addr] = val
+		mmu.ramBanks[(addr-0xa000)+uint16(mmu.currentRAMBank)*0x2000] = val
+
+	// OAM
+	case 0xfe00 <= addr && addr <= 0xfe9f:
+		mmu.gpu.Write(addr, val)
+		return
 
 	// joypad
 	case addr == 0xff00:
@@ -187,15 +197,12 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 		mmu.gpu.Write(addr, val)
 		return
 
-	// OAM
-	case 0xfe00 <= addr && addr <= 0xfe9f:
-		mmu.gpu.Write(addr, val)
-		return
-
+	// interrupt
 	case addr == 0xff0f:
 		mmu.memory[addr] = val&0x1f | 0xe0
 		return
 
+	// for debuging. serial port
 	case addr == 0xff02 && val == 0x81:
 		fmt.Printf("%c", mmu.memory[0xff01])
 		return
