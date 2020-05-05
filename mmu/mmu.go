@@ -18,6 +18,10 @@ type MMU struct {
 	gpu    *gpu.GPU
 	timer  *timer.Timer
 	joypad *joypad.Joypad
+
+	cartridgeType  uint8
+	currentROMBank uint8
+	currentRAMBank uint8
 }
 
 func New(gpu *gpu.GPU, timer *timer.Timer, joypad *joypad.Joypad) *MMU {
@@ -86,6 +90,23 @@ func New(gpu *gpu.GPU, timer *timer.Timer, joypad *joypad.Joypad) *MMU {
 
 func (mmu *MMU) Load(buf []byte) {
 	mmu.cartridge = buf
+
+	mmu.cartridgeType = mmu.getCartridgeType()
+
+	mmu.currentROMBank = 1
+}
+
+func (mmu *MMU) getCartridgeType() uint8 {
+	// TODO: support more cartridge type
+	switch mmu.cartridge[0x147] {
+
+	case 0:
+		return ROMONLY
+	case 0x01, 0x02, 0x03:
+		return MBC1
+	}
+
+	return 0
 }
 
 func (mmu *MMU) Read(addr uint16) uint8 {
@@ -102,7 +123,7 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 
 	// Cartridge ROM, other banks
 	case 0x4000 <= addr && addr <= 0x7fff:
-		return mmu.cartridge[addr]
+		return mmu.cartridge[addr+uint16(mmu.currentROMBank-1)*0x4000]
 
 	// VRAM
 	case 0x8000 <= addr && addr <= 0x9fff:
