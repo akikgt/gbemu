@@ -23,6 +23,9 @@ type MMU struct {
 	cartridgeType  uint8
 	currentROMBank uint8
 	currentRAMBank uint8
+	bankMode       uint8
+
+	ramEnabled bool
 }
 
 func New(gpu *gpu.GPU, timer *timer.Timer, joypad *joypad.Joypad) *MMU {
@@ -94,8 +97,11 @@ func (mmu *MMU) Load(buf []byte) {
 
 	mmu.cartridgeType = mmu.getCartridgeType()
 
+	// set up registers related to cartridge
 	mmu.currentROMBank = 1
 	mmu.currentRAMBank = 0
+	mmu.ramEnabled = false
+	mmu.bankMode = romBankingMode
 }
 
 func (mmu *MMU) getCartridgeType() uint8 {
@@ -133,7 +139,9 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 
 	// Cartridge RAM memory bank
 	case 0xa000 <= addr && addr <= 0xbfff:
-		return mmu.ramBanks[(addr-0xa000)+uint16(mmu.currentRAMBank)*0x2000]
+		if mmu.ramEnabled {
+			return mmu.ramBanks[(addr-0xa000)+uint16(mmu.currentRAMBank)*0x2000]
+		}
 
 	// OAM
 	case 0xfe00 <= addr && addr <= 0xfe9f:
@@ -162,8 +170,10 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 			mmu.bios[addr] = val
 			return
 		}
-		mmu.cartridge[addr] = val
-		return
+
+	// MBC
+	case addr < 0x8000:
+		mmu.handleMBC(addr, val)
 
 	// VRAM
 	case 0x8000 <= addr && addr <= 0x9fff:
