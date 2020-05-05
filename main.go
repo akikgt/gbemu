@@ -142,48 +142,6 @@ func update(screen *ebiten.Image) error {
 		joypad.ReqJoypadInt = false
 	}
 
-	// joypad.ReqJoypadInt = false
-	// if inpututil.IsKeyJustPressed(ebiten.KeyJ) {
-	// 	joypad.KeyPress(j.DOWN)
-	// } else if inpututil.IsKeyJustReleased(ebiten.KeyJ) {
-	// 	joypad.KeyRelease(j.DOWN)
-
-	// } else if inpututil.IsKeyJustPressed(ebiten.KeyK) {
-	// 	joypad.KeyPress(j.UP)
-	// } else if inpututil.IsKeyJustReleased(ebiten.KeyK) {
-	// 	joypad.KeyRelease(j.UP)
-
-	// } else if ebiten.IsKeyPressed(ebiten.KeyH) {
-	// 	joypad.KeyPress(j.LEFT)
-	// } else if inpututil.IsKeyJustReleased(ebiten.KeyH) {
-	// 	joypad.KeyRelease(j.LEFT)
-
-	// } else if inpututil.IsKeyJustPressed(ebiten.KeyL) {
-	// 	joypad.KeyPress(j.RIGHT)
-	// } else if inpututil.IsKeyJustReleased(ebiten.KeyL) {
-	// 	joypad.KeyRelease(j.RIGHT)
-
-	// } else if inpututil.IsKeyJustPressed(ebiten.KeyF) {
-	// 	joypad.KeyPress(j.A)
-	// } else if inpututil.IsKeyJustReleased(ebiten.KeyF) {
-	// 	joypad.KeyRelease(j.A)
-
-	// } else if inpututil.IsKeyJustPressed(ebiten.KeyD) {
-	// 	joypad.KeyPress(j.B)
-	// } else if inpututil.IsKeyJustReleased(ebiten.KeyD) {
-	// 	joypad.KeyRelease(j.B)
-
-	// } else if inpututil.IsKeyJustPressed(ebiten.KeyS) {
-	// 	joypad.KeyPress(j.START)
-	// } else if inpututil.IsKeyJustReleased(ebiten.KeyS) {
-	// 	joypad.KeyRelease(j.START)
-
-	// } else if inpututil.IsKeyJustPressed(ebiten.KeyA) {
-	// 	joypad.KeyPress(j.SELECT)
-	// } else if inpututil.IsKeyJustReleased(ebiten.KeyA) {
-	// 	joypad.KeyRelease(j.SELECT)
-	// }
-
 	return nil
 }
 
@@ -206,12 +164,8 @@ func main() {
 	}
 	fmt.Printf("Successfully read %d byte\n", nb)
 
-	// fmt.Println(hex.Dump(buf[:0x1fff]))
-	// os.Exit(1)
-
 	mmu.Load(buf)
 
-	// for debug mode. Skip booting
 	cpu.Reset()
 
 	if err := ebiten.Run(update, screenWidth, screenHeight, 3, "Game Boy Emulator"); err != nil {
