@@ -133,7 +133,7 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 
 	// Cartridge ROM, other banks
 	case 0x4000 <= addr && addr <= 0x7fff:
-		return mmu.cartridge[addr+uint16(mmu.currentROMBank-1)*0x4000]
+		return mmu.cartridge[int(addr)+int(mmu.currentROMBank-1)*0x4000]
 
 	// VRAM
 	case 0x8000 <= addr && addr <= 0x9fff:

@@ -162,6 +162,10 @@ func (gpu *GPU) renderSprites() {
 
 			coord := int(gpu.ly)*screenWidth + (int(x) + lx)
 
+			if (int(x) + lx) > 160 {
+				continue
+			}
+
 			// TODO: priority. Dr.mario menu uses it.
 			// if attributes>>7&1 == 1 {
 			// check priority

@@ -31,6 +31,7 @@ func (mmu *MMU) changeLoROMBANK(val uint8) {
 	}
 
 	mmu.currentROMBank = mmu.currentROMBank&0xe0 | val&0x1f
+	// fmt.Println(mmu.currentROMBank)
 }
 
 func (mmu *MMU) changeHiROMBANK(val uint8) {
