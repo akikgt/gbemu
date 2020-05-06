@@ -211,7 +211,7 @@ func (gpu *GPU) renderBG() {
 		if gpu.isWindowEnabled() && lx >= int(gpu.wx-7) {
 			x = uint16(lx - int(gpu.wx-7))
 		} else {
-			x = uint16(lx) + uint16(gpu.scx)
+			x = (uint16(lx) + uint16(gpu.scx)) & 255
 		}
 
 		tileCol := x / 8

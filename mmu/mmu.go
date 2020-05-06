@@ -97,6 +97,8 @@ func (mmu *MMU) Load(buf []byte) {
 
 	mmu.cartridgeType = mmu.getCartridgeType()
 
+	fmt.Println(mmu.cartridge[0x147])
+
 	// set up registers related to cartridge
 	mmu.currentROMBank = 1
 	mmu.currentRAMBank = 0
