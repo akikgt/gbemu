@@ -92,6 +92,10 @@ func New(gpu *gpu.GPU, timer *timer.Timer, joypad *joypad.Joypad) *MMU {
 	return mmu
 }
 
+func (mmu *MMU) PrintCurrentRomBank() {
+	fmt.Println(mmu.currentROMBank)
+}
+
 func (mmu *MMU) Load(buf []byte) {
 	mmu.cartridge = buf
 

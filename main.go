@@ -68,7 +68,7 @@ var (
 	mmu    *m.MMU    = m.New(gpu, timer, joypad)
 	cpu    *c.CPU    = c.New(mmu)
 
-	breakPoint uint16 = 0x7ea5
+	breakPoint uint16 = 0xffff
 	// breakPoint uint16 = 0x29fa
 	// 0x2a24 でff80の値が実機と違う
 	// after 0x034c tetris load all tiles
@@ -80,13 +80,21 @@ func update(screen *ebiten.Image) error {
 	// reset TotalTicks every update
 	cpu.TotalTicks = 0
 
+	// flag := false
 	for cpu.TotalTicks < maxTicks {
 
+		// if cpu.GetPC() == 0x30e {
+		// 	flag = true
+		// }
+
+		// if flag {
+		// 	cpu.Dump()
+		// 	mmu.PrintCurrentRomBank()
+		// }
 		ticks := cpu.Execute()
 		gpu.Update(ticks)
 		timer.Update(ticks)
 		cpu.HandleInterrupts()
-		// fmt.Printf("%02x\n", cpu.GetPC())
 		continue
 		// if cpu.GetPC() == breakPoint {
 		// 	cpu.Dump()
@@ -163,7 +171,7 @@ func main() {
 	}
 	defer fp.Close()
 
-	buf := make([]byte, 0x100000)
+	buf := make([]byte, 0x1000000)
 	nb, err := fp.Read(buf)
 	if err != nil {
 		panic(err)

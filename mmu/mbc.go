@@ -35,7 +35,7 @@ func (mmu *MMU) changeLoROMBANK(val uint8) {
 }
 
 func (mmu *MMU) changeHiROMBANK(val uint8) {
-	mmu.currentROMBank = mmu.currentROMBank&0x9f | val&0x60
+	mmu.currentROMBank = mmu.currentROMBank&0x9f | (val & 0x3 << 5)
 }
 
 func (mmu *MMU) changeRAMBANK(val uint8) {
