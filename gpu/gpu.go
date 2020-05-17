@@ -166,11 +166,12 @@ func (gpu *GPU) renderSprites() {
 				continue
 			}
 
-			// TODO: priority. Dr.mario menu uses it.
-			// if attributes>>7&1 == 1 {
-			// check priority
-			// 	continue
-			// }
+			// priority
+			if attributes>>7&1 == 1 {
+				if !gpu.isSpritePrior(coord) {
+					continue
+				}
+			}
 
 			// change palette based on the attribute bit4
 			palette := gpu.obp0
@@ -181,6 +182,27 @@ func (gpu *GPU) renderSprites() {
 			gpu.paintPixel(coord, colorNum, palette)
 		}
 	}
+}
+
+func (gpu *GPU) isSpritePrior(coord int) bool {
+	// check background color and if the back ground color is color num 0
+	// return true
+
+	// get background colors
+	red := gpu.Pixels[coord*4+0]
+	green := gpu.Pixels[coord*4+1]
+	blue := gpu.Pixels[coord*4+2]
+
+	// get base color of background palette
+	baseColor := gpu.getColor(0, gpu.bgp)
+	baseRed, baseGreen, baseBlue := getRGB(baseColor)
+
+	// check current background color is color num 0(base color) or not
+	if red == baseRed && green == baseGreen && blue == baseBlue {
+		return true
+	}
+
+	return false
 }
 
 func (gpu *GPU) renderBG() {
