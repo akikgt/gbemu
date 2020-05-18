@@ -14,8 +14,9 @@ const (
 type GPU struct {
 	counter uint16
 
-	vram [0x2000]uint8
-	oam  [0xa0]uint8
+	vram0 [0x2000]uint8
+	vram1 [0x2000]uint8 // for CGB mode
+	oam   [0xa0]uint8
 
 	lcdc uint8 // 0xff40 LCD control
 	stat uint8 // 0xff41 LCDC status
@@ -28,12 +29,17 @@ type GPU struct {
 	obp1 uint8 // 0xff49
 	wy   uint8 // 0xff4a
 	wx   uint8 // 0xff4b
+	vbk  uint8 // 0xff4f VRAM bank
 
 	Pixels   []byte
 	tileSets [384][8][8]uint8
 
 	ReqVBlankInt bool
 	ReqLCDInt    bool
+
+	cbgp   [0x40]uint8
+	cbpidx uint8
+	// cobp [0x80]uint8
 }
 
 func New() *GPU {
@@ -50,6 +56,7 @@ func New() *GPU {
 	gpu.ReqVBlankInt = false
 	gpu.ReqLCDInt = false
 
+	gpu.cbpidx = 0
 	return gpu
 }
 
@@ -69,8 +76,12 @@ func (gpu *GPU) updateTileSets() {
 
 		for y := 0; y < 8; y++ {
 			// each tile data is 16 byte
-			data1 := gpu.vram[i*16+y*2]
-			data2 := gpu.vram[i*16+y*2+1]
+			data1 := gpu.vram0[i*16+y*2]
+			data2 := gpu.vram0[i*16+y*2+1]
+			if gpu.vbk == 1 {
+				data1 = gpu.vram1[i*16+y*2]
+				data2 = gpu.vram1[i*16+y*2+1]
+			}
 
 			for x := 0; x < 8; x++ {
 				b := 7 - x
@@ -225,7 +236,6 @@ func (gpu *GPU) renderBG() {
 		y = uint16((gpu.scy + gpu.ly) & 255)
 	}
 
-	// var tileRow uint16 = uint16(y / 8)
 	tileRow := y / 8
 
 	for lx := 0; lx < 160; lx++ {
@@ -239,7 +249,11 @@ func (gpu *GPU) renderBG() {
 
 		tileCol := x / 8
 		tileAddr := base + tileRow*32 + tileCol
-		var tileNum uint16 = uint16(gpu.vram[tileAddr])
+		var tileNum uint16 = uint16(gpu.vram0[tileAddr])
+
+		// read BG map attributes
+		attributes := gpu.vram1[tileAddr]
+		paletteNum := attributes & 0x7
 
 		// select tile data 0=8800-97FF or 1=8000-8FFF
 		if gpu.lcdc&0x10 == 0 && tileNum < 128 {
@@ -252,8 +266,26 @@ func (gpu *GPU) renderBG() {
 		// (ly, lx) is coordinate in 160 * 144 screen
 		coord := int(gpu.ly)*screenWidth + lx
 
-		gpu.paintPixel(coord, colorNum, gpu.bgp)
+		gpu.paintColorPixel(coord, colorNum, paletteNum)
+		// gpu.paintPixel(coord, colorNum, gpu.bgp)
 	}
+}
+
+func (gpu *GPU) paintColorPixel(coord int, colorNum uint8, palette uint8) {
+	red, green, blue := gpu.getRGB2(colorNum, palette)
+
+	gpu.Pixels[coord*4+0] = red   // R
+	gpu.Pixels[coord*4+1] = green // G
+	gpu.Pixels[coord*4+2] = blue  // B
+	gpu.Pixels[coord*4+3] = 0xff  // A
+}
+
+func (gpu *GPU) getRGB2(colorNum, palette uint8) (uint8, uint8, uint8) {
+	var color uint16 = uint16(gpu.cbgp[palette*8+2*colorNum]) | uint16(gpu.cbgp[palette*8+2*colorNum+1])<<8
+	red := uint8(color & 0x1f)
+	green := uint8(color >> 5 & 0x1f)
+	blue := uint8(color >> 10 & 0x1f)
+	return red, green, blue
 }
 
 func (gpu *GPU) paintPixel(coord int, colorNum uint8, palette uint8) {
@@ -312,7 +344,10 @@ func getRGB(color uint8) (uint8, uint8, uint8) {
 
 func (gpu *GPU) Read(addr uint16) uint8 {
 	if 0x8000 <= addr && addr <= 0x9fff {
-		return gpu.vram[addr-0x8000]
+		if gpu.vbk == 1 {
+			return gpu.vram1[addr-0x8000]
+		}
+		return gpu.vram0[addr-0x8000]
 	}
 
 	if 0xfe00 <= addr && addr <= 0xfe9f {
@@ -344,13 +379,17 @@ func (gpu *GPU) Read(addr uint16) uint8 {
 		return gpu.wx
 	}
 
-	return gpu.vram[addr]
+	return gpu.vram0[addr]
 }
 
 func (gpu *GPU) Write(addr uint16, val uint8) {
 
 	if 0x8000 <= addr && addr <= 0x9fff {
-		gpu.vram[addr-0x8000] = val
+		if gpu.vbk == 1 {
+			gpu.vram1[addr-0x8000] = val
+		} else {
+			gpu.vram0[addr-0x8000] = val
+		}
 		gpu.updateTileSets()
 
 		return
@@ -387,6 +426,19 @@ func (gpu *GPU) Write(addr uint16, val uint8) {
 		gpu.wy = val
 	case 0xff4b:
 		gpu.wx = val
+	case 0xff4f:
+		gpu.vbk = val & 1
+
+	// Background palette data
+	case 0xff68:
+		gpu.cbpidx = val
+	case 0xff69:
+		idx := gpu.cbpidx & 0x3f
+		gpu.cbgp[idx] = val
+		if gpu.cbpidx&0x80 > 0 {
+			// Auto Increment
+			gpu.cbpidx++
+		}
 	}
 }
 

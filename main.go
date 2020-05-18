@@ -57,7 +57,7 @@ const (
 	screenHeight = 144
 
 	// GB CPU is 4194304Hz. To get 60FPS, 4194304/60
-	maxTicks = 69905 * 2
+	maxTicks = 69905
 )
 
 var (

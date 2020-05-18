@@ -162,7 +162,11 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 		return mmu.timer.Read(addr)
 
 	// LCD
-	case 0xff40 <= addr && addr <= 0xff4b:
+	case 0xff40 <= addr && addr <= 0xff4f:
+		return mmu.gpu.Read(addr)
+
+	// LCD for CGB mode
+	case 0xff68 <= addr && addr <= 0xff6b:
 		return mmu.gpu.Read(addr)
 	}
 
@@ -205,11 +209,27 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 		return
 
 	// LCD
-	case 0xff40 <= addr && addr <= 0xff4b:
+	case 0xff40 <= addr && addr <= 0xff4f:
 		if addr == 0xff46 {
 			mmu.dmaTransfer(val)
 			return
 		}
+		mmu.gpu.Write(addr, val)
+		return
+
+	// LCD VRAM DMA Transfers for CGB mode
+	case 0xff51 <= addr && addr <= 0xff55:
+		if addr == 0xff55 {
+			// start the transfer
+			mmu.hdmaTransfer(val)
+			return
+		}
+
+		mmu.memory[addr] = val
+		return
+
+	// LCD for CGB mode
+	case 0xff68 <= addr && addr <= 0xff6b:
 		mmu.gpu.Write(addr, val)
 		return
 
@@ -245,6 +265,31 @@ func (mmu *MMU) dmaTransfer(val uint8) {
 	for i := 0; i < 0xa0; i++ {
 		mmu.Write(0xfe00+uint16(i), mmu.Read(src+uint16(i)))
 	}
+}
+
+func (mmu *MMU) hdmaTransfer(val uint8) {
+	// The lower 4 bits of the address are ignored
+	src := (uint16(mmu.memory[0xff51])<<8 | uint16(mmu.memory[0xff52])) & 0xfff0
+	dst := (uint16(mmu.memory[0xff53])<<8|uint16(mmu.memory[0xff54]))&0x1ff0 | 0x8000
+
+	// the lower 7 bits of val specify the length
+	length := (int(val&0x7f) + 1) << 8
+
+	// the upper bit indicated the Transfer Mode
+	mode := val >> 7
+	if mode == 0 {
+		// General Purpose DMA
+		for i := 0; i < length; i++ {
+			mmu.Write(dst+uint16(i), mmu.Read(src+uint16(i)))
+		}
+
+	} else if mode == 1 {
+		// H-Blank DMA
+		for i := 0; i < length; i++ {
+			mmu.Write(dst+uint16(i), mmu.Read(src+uint16(i)))
+		}
+	}
+
 }
 
 func (mmu *MMU) UpdateIntFlag() {
