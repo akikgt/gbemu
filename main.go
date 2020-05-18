@@ -12,7 +12,6 @@ import (
 	"os"
 
 	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
 )
 
 func debugMode(cpu *c.CPU, breakPoint *uint16) bool {
@@ -58,7 +57,7 @@ const (
 	screenHeight = 144
 
 	// GB CPU is 4194304Hz. To get 60FPS, 4194304/60
-	maxTicks = 69905
+	maxTicks = 69905 * 2
 )
 
 var (
@@ -80,52 +79,23 @@ func update(screen *ebiten.Image) error {
 	// reset TotalTicks every update
 	cpu.TotalTicks = 0
 
-	// flag := false
 	for cpu.TotalTicks < maxTicks {
-
-		// if cpu.GetPC() == 0x30e {
-		// 	flag = true
-		// }
-
-		// if flag {
-		// 	cpu.Dump()
-		// 	mmu.PrintCurrentRomBank()
-		// }
 		ticks := cpu.Execute()
 		gpu.Update(ticks)
 		timer.Update(ticks)
 		cpu.HandleInterrupts()
-		continue
-		// if cpu.GetPC() == breakPoint {
-		// 	cpu.Dump()
-		// 	os.Exit(1)
-		// }
-
-		if cpu.GetPC() == breakPoint && !mmu.IsBooting {
-			cpu.Dump()
-			isContinue := debugMode(cpu, &breakPoint)
-			if !isContinue {
-				break
-			}
-		} else {
-			ticks := cpu.Execute()
-			gpu.Update(ticks)
-			timer.Update(ticks)
-			cpu.HandleInterrupts()
-		}
-
 	}
 
 	if ebiten.IsDrawingSkipped() {
 		return nil
 	}
 
-	// cpu.Dump()
 	// gpu.DisplayTileSets()
 	screen.ReplacePixels(gpu.Pixels)
 
-	msg := fmt.Sprintf("TPS = %0.2f\nFPS = %0.2f", ebiten.CurrentTPS(), ebiten.CurrentFPS())
-	ebitenutil.DebugPrint(screen, msg)
+	// for debug, TPS, FPS
+	// msg := fmt.Sprintf("TPS = %0.2f\nFPS = %0.2f", ebiten.CurrentTPS(), ebiten.CurrentFPS())
+	// ebitenutil.DebugPrint(screen, msg)
 
 	// joypad
 	if ebiten.IsKeyPressed(ebiten.KeyJ) {

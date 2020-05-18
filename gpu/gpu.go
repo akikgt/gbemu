@@ -108,9 +108,6 @@ func (gpu *GPU) renderScanline() {
 }
 
 func (gpu *GPU) renderSprites() {
-	// TODO:
-	// priority to background and sprites itself
-
 	for i := 0; i < 40; i++ {
 		y := gpu.oam[i*4] - 16
 		x := gpu.oam[i*4+1] - 8
