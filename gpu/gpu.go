@@ -31,8 +31,9 @@ type GPU struct {
 	wx   uint8 // 0xff4b
 	vbk  uint8 // 0xff4f VRAM bank
 
-	Pixels   []byte
-	tileSets [384][8][8]uint8
+	Pixels    []byte
+	tileSets  [384][8][8]uint8
+	tileSets2 [384][8][8]uint8
 
 	ReqVBlankInt bool
 	ReqLCDInt    bool
@@ -78,15 +79,24 @@ func (gpu *GPU) updateTileSets() {
 			// each tile data is 16 byte
 			data1 := gpu.vram0[i*16+y*2]
 			data2 := gpu.vram0[i*16+y*2+1]
-			if gpu.vbk == 1 {
-				data1 = gpu.vram1[i*16+y*2]
-				data2 = gpu.vram1[i*16+y*2+1]
-			}
 
 			for x := 0; x < 8; x++ {
 				b := 7 - x
 				color := (data2>>b&1)<<1 | (data1 >> b & 1)
 				gpu.tileSets[i][y][x] = color
+			}
+		}
+
+		// update tileSets for CGB mode
+		for y := 0; y < 8; y++ {
+			// each tile data is 16 byte
+			data1 := gpu.vram1[i*16+y*2]
+			data2 := gpu.vram1[i*16+y*2+1]
+
+			for x := 0; x < 8; x++ {
+				b := 7 - x
+				color := (data2>>b&1)<<1 | (data1 >> b & 1)
+				gpu.tileSets2[i][y][x] = color
 			}
 		}
 	}
@@ -254,6 +264,7 @@ func (gpu *GPU) renderBG() {
 		// read BG map attributes
 		attributes := gpu.vram1[tileAddr]
 		paletteNum := attributes & 0x7
+		tileBankNum := attributes & 0x8
 
 		// select tile data 0=8800-97FF or 1=8000-8FFF
 		if gpu.lcdc&0x10 == 0 && tileNum < 128 {
@@ -262,6 +273,9 @@ func (gpu *GPU) renderBG() {
 
 		// (y, x) is coordinate in 256 * 256 full background
 		colorNum := gpu.tileSets[tileNum][y%8][x%8]
+		if tileBankNum == 1 {
+			colorNum = gpu.tileSets2[tileNum][y%8][x%8]
+		}
 
 		// (ly, lx) is coordinate in 160 * 144 screen
 		coord := int(gpu.ly)*screenWidth + lx
@@ -282,9 +296,9 @@ func (gpu *GPU) paintColorPixel(coord int, colorNum uint8, palette uint8) {
 
 func (gpu *GPU) getRGB2(colorNum, palette uint8) (uint8, uint8, uint8) {
 	var color uint16 = uint16(gpu.cbgp[palette*8+2*colorNum]) | uint16(gpu.cbgp[palette*8+2*colorNum+1])<<8
-	red := uint8(color & 0x1f)
-	green := uint8(color >> 5 & 0x1f)
-	blue := uint8(color >> 10 & 0x1f)
+	red := uint8(color&0x1f) << 3
+	green := uint8(color>>5&0x1f) << 3
+	blue := uint8(color>>10&0x1f) << 3
 	return red, green, blue
 }
 
