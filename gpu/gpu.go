@@ -40,8 +40,9 @@ type GPU struct {
 
 	cgbMode bool
 	cbgp    [0x40]uint8
-	cbpidx  uint8
-	// cobp [0x80]uint8
+	cbpIdx  uint8
+	cobp    [0x40]uint8
+	cobpIdx uint8
 }
 
 func New() *GPU {
@@ -58,7 +59,7 @@ func New() *GPU {
 	gpu.ReqVBlankInt = false
 	gpu.ReqLCDInt = false
 
-	gpu.cbpidx = 0
+	gpu.cbpIdx = 0
 	return gpu
 }
 
@@ -181,6 +182,10 @@ func (gpu *GPU) renderSprites() {
 			}
 
 			colorNum := gpu.tileSets[tileNum][tileY%8][tileX%8]
+			if gpu.vbk == 1 {
+				// CGB Mode only. Use VRAM-Bank 1
+				colorNum = gpu.tileSets2[tileNum][tileY%8][tileX%8]
+			}
 
 			// for sprites, colorNum 0 means transparent
 			if colorNum == 0 {
@@ -200,13 +205,18 @@ func (gpu *GPU) renderSprites() {
 				}
 			}
 
-			// change palette based on the attribute bit4
-			palette := gpu.obp0
-			if attributes>>4&1 == 1 {
-				palette = gpu.obp1
+			if gpu.cgbMode {
+				// change palette based on the attribute bit2-0
+				paletteNum := attributes & 0x7
+				gpu.paintColorPixel(coord, colorNum, paletteNum, true)
+			} else {
+				// change palette based on the attribute bit4
+				palette := gpu.obp0
+				if attributes>>4&1 == 1 {
+					palette = gpu.obp1
+				}
+				gpu.paintPixel(coord, colorNum, palette)
 			}
-
-			gpu.paintPixel(coord, colorNum, palette)
 		}
 	}
 }
@@ -290,15 +300,17 @@ func (gpu *GPU) renderBG() {
 		coord := int(gpu.ly)*screenWidth + lx
 
 		if gpu.cgbMode {
-			gpu.paintColorPixel(coord, colorNum, paletteNum)
+			gpu.paintColorPixel(coord, colorNum, paletteNum, false)
 		} else {
 			gpu.paintPixel(coord, colorNum, gpu.bgp)
 		}
 	}
 }
 
-func (gpu *GPU) paintColorPixel(coord int, colorNum uint8, palette uint8) {
-	red, green, blue := gpu.getRGB(colorNum, palette)
+func (gpu *GPU) paintColorPixel(coord int, colorNum uint8, palette uint8, isSprite bool) {
+	color := gpu.getCGBColor(colorNum, palette, isSprite)
+
+	red, green, blue := gpu.getRGB(color)
 
 	gpu.Pixels[coord*4+0] = red   // R
 	gpu.Pixels[coord*4+1] = green // G
@@ -306,8 +318,15 @@ func (gpu *GPU) paintColorPixel(coord int, colorNum uint8, palette uint8) {
 	gpu.Pixels[coord*4+3] = 0xff  // A
 }
 
-func (gpu *GPU) getRGB(colorNum, palette uint8) (uint8, uint8, uint8) {
-	var color uint16 = uint16(gpu.cbgp[palette*8+2*colorNum]) | uint16(gpu.cbgp[palette*8+2*colorNum+1])<<8
+func (gpu *GPU) getCGBColor(colorNum, palette uint8, isSprite bool) uint16 {
+	paletteMemory := &gpu.cbgp
+	if isSprite {
+		paletteMemory = &gpu.cobp
+	}
+	return uint16(paletteMemory[palette*8+2*colorNum]) | uint16(paletteMemory[palette*8+2*colorNum+1])<<8
+}
+
+func (gpu *GPU) getRGB(color uint16) (uint8, uint8, uint8) {
 	red := uint8(color&0x1f) << 3
 	green := uint8(color>>5&0x1f) << 3
 	blue := uint8(color>>10&0x1f) << 3
@@ -457,13 +476,24 @@ func (gpu *GPU) Write(addr uint16, val uint8) {
 
 	// Background palette data
 	case 0xff68:
-		gpu.cbpidx = val
+		gpu.cbpIdx = val
 	case 0xff69:
-		idx := gpu.cbpidx & 0x3f
+		idx := gpu.cbpIdx & 0x3f
 		gpu.cbgp[idx] = val
-		if gpu.cbpidx&0x80 > 0 {
+		if gpu.cbpIdx&0x80 > 0 {
 			// Auto Increment
-			gpu.cbpidx++
+			gpu.cbpIdx++
+		}
+
+	// Sprite palette data
+	case 0xff6a:
+		gpu.cobpIdx = val
+	case 0xff6b:
+		idx := gpu.cobpIdx & 0x3f
+		gpu.cobp[idx] = val
+		if gpu.cobpIdx&0x80 > 0 {
+			// Auto Increment
+			gpu.cobpIdx++
 		}
 	}
 }
