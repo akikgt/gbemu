@@ -314,7 +314,3 @@ func (mmu *MMU) UpdateIntFlag() {
 
 	mmu.Write(0xff0f, intFlag)
 }
-
-func (mmu *MMU) Test() {
-	mmu.gpu.Test()
-}

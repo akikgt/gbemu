@@ -96,3 +96,15 @@ func (joypad *Joypad) KeyRelease(key uint8) {
 		joypad.buttonKeys |= 0x1
 	}
 }
+
+func (joypad *Joypad) ReleaseAll() {
+	joypad.KeyRelease(DOWN)
+	joypad.KeyRelease(UP)
+	joypad.KeyRelease(LEFT)
+	joypad.KeyRelease(RIGHT)
+	joypad.KeyRelease(START)
+	joypad.KeyRelease(SELECT)
+	joypad.KeyRelease(B)
+	joypad.KeyRelease(A)
+	joypad.ReqJoypadInt = false
+}

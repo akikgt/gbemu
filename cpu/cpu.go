@@ -93,6 +93,9 @@ func (cpu *CPU) Reset() {
 	cpu.mmu.Write(0xff4b, 0x00)
 	cpu.mmu.Write(0xffff, 0x00)
 
+}
+
+func (cpu *CPU) SetCGBMode() {
 	// for CGB
 	cpu.setReg16("AF", 0x11b0)
 	// cpu.setReg16("BC", 0x0000)

@@ -38,8 +38,9 @@ type GPU struct {
 	ReqVBlankInt bool
 	ReqLCDInt    bool
 
-	cbgp   [0x40]uint8
-	cbpidx uint8
+	cgbMode bool
+	cbgp    [0x40]uint8
+	cbpidx  uint8
 	// cobp [0x80]uint8
 }
 
@@ -59,6 +60,10 @@ func New() *GPU {
 
 	gpu.cbpidx = 0
 	return gpu
+}
+
+func (gpu *GPU) SetCGBMode() {
+	gpu.cgbMode = true
 }
 
 func (gpu *GPU) ResetFrame() {
@@ -85,6 +90,10 @@ func (gpu *GPU) updateTileSets() {
 				color := (data2>>b&1)<<1 | (data1 >> b & 1)
 				gpu.tileSets[i][y][x] = color
 			}
+		}
+
+		if !gpu.cgbMode {
+			continue
 		}
 
 		// update tileSets for CGB mode
@@ -212,8 +221,8 @@ func (gpu *GPU) isSpritePrior(coord int) bool {
 	blue := gpu.Pixels[coord*4+2]
 
 	// get base color of background palette
-	baseColor := gpu.getColor(0, gpu.bgp)
-	baseRed, baseGreen, baseBlue := getRGB(baseColor)
+	baseColor := gpu.getNGBColor(0, gpu.bgp)
+	baseRed, baseGreen, baseBlue := getMonochrome(baseColor)
 
 	// check current background color is color num 0(base color) or not
 	if red == baseRed && green == baseGreen && blue == baseBlue {
@@ -280,13 +289,16 @@ func (gpu *GPU) renderBG() {
 		// (ly, lx) is coordinate in 160 * 144 screen
 		coord := int(gpu.ly)*screenWidth + lx
 
-		gpu.paintColorPixel(coord, colorNum, paletteNum)
-		// gpu.paintPixel(coord, colorNum, gpu.bgp)
+		if gpu.cgbMode {
+			gpu.paintColorPixel(coord, colorNum, paletteNum)
+		} else {
+			gpu.paintPixel(coord, colorNum, gpu.bgp)
+		}
 	}
 }
 
 func (gpu *GPU) paintColorPixel(coord int, colorNum uint8, palette uint8) {
-	red, green, blue := gpu.getRGB2(colorNum, palette)
+	red, green, blue := gpu.getRGB(colorNum, palette)
 
 	gpu.Pixels[coord*4+0] = red   // R
 	gpu.Pixels[coord*4+1] = green // G
@@ -294,7 +306,7 @@ func (gpu *GPU) paintColorPixel(coord int, colorNum uint8, palette uint8) {
 	gpu.Pixels[coord*4+3] = 0xff  // A
 }
 
-func (gpu *GPU) getRGB2(colorNum, palette uint8) (uint8, uint8, uint8) {
+func (gpu *GPU) getRGB(colorNum, palette uint8) (uint8, uint8, uint8) {
 	var color uint16 = uint16(gpu.cbgp[palette*8+2*colorNum]) | uint16(gpu.cbgp[palette*8+2*colorNum+1])<<8
 	red := uint8(color&0x1f) << 3
 	green := uint8(color>>5&0x1f) << 3
@@ -303,9 +315,9 @@ func (gpu *GPU) getRGB2(colorNum, palette uint8) (uint8, uint8, uint8) {
 }
 
 func (gpu *GPU) paintPixel(coord int, colorNum uint8, palette uint8) {
-	color := gpu.getColor(colorNum, palette)
+	color := gpu.getNGBColor(colorNum, palette)
 
-	red, green, blue := getRGB(color)
+	red, green, blue := getMonochrome(color)
 
 	gpu.Pixels[coord*4+0] = red   // R
 	gpu.Pixels[coord*4+1] = green // G
@@ -313,7 +325,7 @@ func (gpu *GPU) paintPixel(coord int, colorNum uint8, palette uint8) {
 	gpu.Pixels[coord*4+3] = 0xff  // A
 }
 
-func (gpu *GPU) getColor(colorNum, palette uint8) uint8 {
+func (gpu *GPU) getNGBColor(colorNum, palette uint8) uint8 {
 	var color uint8
 
 	switch colorNum {
@@ -341,7 +353,7 @@ func (gpu *GPU) getColor(colorNum, palette uint8) uint8 {
 	return white
 }
 
-func getRGB(color uint8) (uint8, uint8, uint8) {
+func getMonochrome(color uint8) (uint8, uint8, uint8) {
 	switch color {
 	case white:
 		return 0xff, 0xff, 0xff
@@ -564,9 +576,4 @@ func (gpu *GPU) Update(ticks uint8) {
 	}
 
 	gpu.compareLYC()
-}
-
-func (gpu *GPU) Test() {
-	gpu.stat = 0x81
-	gpu.ly = 0x90
 }

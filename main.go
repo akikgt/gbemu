@@ -68,10 +68,6 @@ var (
 	cpu    *c.CPU    = c.New(mmu)
 
 	breakPoint uint16 = 0xffff
-	// breakPoint uint16 = 0x29fa
-	// 0x2a24 でff80の値が実機と違う
-	// after 0x034c tetris load all tiles
-	// breakPoint uint16 = 0x282a // tetris end of tileset loading
 )
 
 func update(screen *ebiten.Image) error {
@@ -90,7 +86,6 @@ func update(screen *ebiten.Image) error {
 		return nil
 	}
 
-	// gpu.DisplayTileSets()
 	screen.ReplacePixels(gpu.Pixels)
 
 	// for debug, TPS, FPS
@@ -115,15 +110,7 @@ func update(screen *ebiten.Image) error {
 	} else if ebiten.IsKeyPressed(ebiten.KeyA) {
 		joypad.KeyPress(j.A)
 	} else {
-		joypad.KeyRelease(j.DOWN)
-		joypad.KeyRelease(j.UP)
-		joypad.KeyRelease(j.LEFT)
-		joypad.KeyRelease(j.RIGHT)
-		joypad.KeyRelease(j.START)
-		joypad.KeyRelease(j.SELECT)
-		joypad.KeyRelease(j.B)
-		joypad.KeyRelease(j.A)
-		joypad.ReqJoypadInt = false
+		joypad.ReleaseAll()
 	}
 
 	return nil
@@ -151,6 +138,10 @@ func main() {
 	mmu.Load(buf)
 
 	cpu.Reset()
+	if len(os.Args) == 3 && os.Args[2] == "--color" {
+		cpu.SetCGBMode()
+		gpu.SetCGBMode()
+	}
 
 	if err := ebiten.Run(update, screenWidth, screenHeight, 3, "Game Boy Emulator"); err != nil {
 		log.Fatal(err)
