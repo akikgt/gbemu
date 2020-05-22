@@ -5,6 +5,7 @@ const (
 	ROMONLY = iota
 	MBC1
 	MBC2
+	MBC3
 
 	// current bank mode
 	romBankingMode
@@ -21,21 +22,28 @@ func (mmu *MMU) enableRAMBank(val uint8) {
 	} else {
 		mmu.ramEnabled = false
 	}
-
 }
 
-func (mmu *MMU) changeLoROMBANK(val uint8) {
+func (mmu *MMU) changeLoROMBank(val uint8) {
 	if val&0x1f == 0 {
 		mmu.currentROMBank = mmu.currentROMBank&0xe0 | 1
 		return
 	}
 
 	mmu.currentROMBank = mmu.currentROMBank&0xe0 | val&0x1f
-	// fmt.Println(mmu.currentROMBank)
 }
 
-func (mmu *MMU) changeHiROMBANK(val uint8) {
+func (mmu *MMU) changeHiROMBank(val uint8) {
 	mmu.currentROMBank = mmu.currentROMBank&0x9f | (val & 0x3 << 5)
+}
+
+func (mmu *MMU) changeROMBankMBC3(val uint8) {
+	if val&0x7f == 0 {
+		mmu.currentROMBank = 1
+		return
+	}
+
+	mmu.currentROMBank = val & 0x7f
 }
 
 func (mmu *MMU) changeRAMBANK(val uint8) {
@@ -58,16 +66,32 @@ func (mmu *MMU) handleMBC(addr uint16, val uint8) {
 		mmu.enableRAMBank(val)
 
 	case addr <= 0x3fff:
-		mmu.changeLoROMBANK(val)
+		if mmu.cartridgeType == MBC1 {
+			mmu.changeLoROMBank(val)
+		} else if mmu.cartridgeType == MBC3 {
+			mmu.changeROMBankMBC3(val)
+		}
 
 	case addr <= 0x5fff:
-		if mmu.bankMode == romBankingMode {
-			mmu.changeHiROMBANK(val)
-		} else if mmu.bankMode == ramBankingMode {
+		if mmu.cartridgeType == MBC1 {
+			if mmu.bankMode == romBankingMode {
+				mmu.changeHiROMBank(val)
+			} else if mmu.bankMode == ramBankingMode {
+				mmu.changeRAMBANK(val)
+			}
+		} else if mmu.cartridgeType == MBC3 {
+			if 0x8 <= val && val <= 0xc {
+				mmu.rtcEnabled = true
+				mmu.rtc = val
+				return
+			}
+			mmu.rtcEnabled = false
 			mmu.changeRAMBANK(val)
 		}
 
 	case addr <= 0x7fff:
-		mmu.changeBankingMode(val)
+		if mmu.cartridgeType == MBC1 {
+			mmu.changeBankingMode(val)
+		}
 	}
 }

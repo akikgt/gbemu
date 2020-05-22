@@ -1,5 +1,7 @@
 package gpu
 
+import "fmt"
+
 const (
 	screenWidth  = 160
 	screenHeight = 144
@@ -197,6 +199,9 @@ func (gpu *GPU) renderSprites() {
 			if (int(x) + lx) > 160 {
 				continue
 			}
+			if coord < 0 || coord >= screenWidth*screenHeight {
+				continue
+			}
 
 			// priority
 			if attributes>>7&1 == 1 {
@@ -298,6 +303,10 @@ func (gpu *GPU) renderBG() {
 
 		// (ly, lx) is coordinate in 160 * 144 screen
 		coord := int(gpu.ly)*screenWidth + lx
+
+		if coord < 0 || coord >= screenWidth*screenHeight {
+			continue
+		}
 
 		if gpu.cgbMode {
 			gpu.paintColorPixel(coord, colorNum, paletteNum, false)
@@ -422,8 +431,18 @@ func (gpu *GPU) Read(addr uint16) uint8 {
 		return gpu.wy
 	case 0xff4b:
 		return gpu.wx
+	case 0xff68:
+		return gpu.cbpIdx
+	// case 0xff69:
+	// 	return 0
+	case 0xff6a:
+		return gpu.cobpIdx
+		// case 0xff6b:
+		// 	return 0
 	}
 
+	fmt.Println("Invalid memory access!")
+	fmt.Println(addr)
 	return gpu.vram0[addr]
 }
 

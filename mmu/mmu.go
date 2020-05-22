@@ -24,8 +24,11 @@ type MMU struct {
 	currentROMBank uint8
 	currentRAMBank uint8
 	bankMode       uint8
+	// TODO: RTC shoudl be an array of registers
+	rtc uint8
 
 	ramEnabled bool
+	rtcEnabled bool
 }
 
 func New(gpu *gpu.GPU, timer *timer.Timer, joypad *joypad.Joypad) *MMU {
@@ -107,6 +110,7 @@ func (mmu *MMU) Load(buf []byte) {
 	mmu.currentROMBank = 1
 	mmu.currentRAMBank = 0
 	mmu.ramEnabled = false
+	mmu.rtcEnabled = false
 	mmu.bankMode = romBankingMode
 }
 
@@ -118,6 +122,8 @@ func (mmu *MMU) getCartridgeType() uint8 {
 		return ROMONLY
 	case 0x01, 0x02, 0x03:
 		return MBC1
+	case 0x0f, 0x10, 0x11, 0x12, 0x13:
+		return MBC3
 	}
 
 	return 0
@@ -143,11 +149,15 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 	case 0x8000 <= addr && addr <= 0x9fff:
 		return mmu.gpu.Read(addr)
 
-	// Cartridge RAM memory bank
+	// Cartridge RAM memory bank or RTC
 	case 0xa000 <= addr && addr <= 0xbfff:
 		if mmu.ramEnabled {
-			return mmu.ramBanks[(addr-0xa000)+uint16(mmu.currentRAMBank)*0x2000]
+			if mmu.rtcEnabled {
+				return mmu.rtc
+			}
+			return mmu.ramBanks[(int(addr)-0xa000)+int(mmu.currentRAMBank)*0x2000]
 		}
+		return mmu.ramBanks[addr-0xa000]
 
 	// OAM
 	case 0xfe00 <= addr && addr <= 0xfe9f:
@@ -184,14 +194,25 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 	// MBC
 	case addr < 0x8000:
 		mmu.handleMBC(addr, val)
+		return
 
 	// VRAM
 	case 0x8000 <= addr && addr <= 0x9fff:
 		mmu.gpu.Write(addr, val)
 		return
 
+	// RAM Bank or RTC
 	case 0xa000 <= addr && addr <= 0xbfff:
-		mmu.ramBanks[(addr-0xa000)+uint16(mmu.currentRAMBank)*0x2000] = val
+		if mmu.ramEnabled {
+			if mmu.rtcEnabled {
+				mmu.rtc = val
+				return
+			}
+			mmu.ramBanks[(int(addr)-0xa000)+int(mmu.currentRAMBank)*0x2000] = val
+			return
+		}
+		mmu.ramBanks[addr-0xa000] = val
+		return
 
 	// OAM
 	case 0xfe00 <= addr && addr <= 0xfe9f:

@@ -4,3 +4,5 @@ ROM
 log
 main
 .DS_Store
+releases/
+mylog.txt
