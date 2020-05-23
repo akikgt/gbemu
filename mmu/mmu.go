@@ -1,6 +1,7 @@
 package mmu
 
 import (
+	"encoding/hex"
 	"fmt"
 	"gbemu/gpu"
 	"gbemu/joypad"
@@ -11,8 +12,8 @@ type MMU struct {
 	bios      [0x100]uint8
 	cartridge []byte
 
-	memory    [0x10000]uint8
-	ramBanks  [0x8000]uint8
+	memory    [0x20000]uint8
+	ramBanks  [0x20000]uint8
 	wramBanks [0x8000]uint8
 	svbk      uint8
 
@@ -22,10 +23,11 @@ type MMU struct {
 	timer  *timer.Timer
 	joypad *joypad.Joypad
 
-	cartridgeType  uint8
-	currentROMBank uint8
-	currentRAMBank uint8
-	bankMode       uint8
+	cartridgeType    uint8
+	currentROMBank   uint8
+	hiCurrentROMBank uint8
+	currentRAMBank   uint8
+	bankMode         uint8
 	// TODO: RTC shoudl be an array of registers
 	rtc uint8
 
@@ -62,7 +64,7 @@ func New(gpu *gpu.GPU, timer *timer.Timer, joypad *joypad.Joypad) *MMU {
 		0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50,
 	}
 
-	mmu.memory = [0x10000]uint8{
+	mmu.memory = [0x20000]uint8{
 		// BIOS
 		0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0x20, 0xFB, 0x21, 0x26, 0xFF, 0x0E,
 		0x11, 0x3E, 0x80, 0x32, 0xE2, 0x0C, 0x3E, 0xF3, 0xE2, 0x32, 0x3E, 0x77, 0x77, 0x3E, 0xFC, 0xE0,
@@ -143,19 +145,26 @@ func (mmu *MMU) getCartridgeType() uint8 {
 
 func (mmu *MMU) Read(addr uint16) uint8 {
 	switch {
-	case addr < 0x100:
-		// if mmu.IsBooting {
-		// 	return mmu.bios[addr]
-		// }
-		return mmu.cartridge[addr]
+	// case addr < 0x100:
+	// 	// if mmu.IsBooting {
+	// 	// 	return mmu.bios[addr]
+	// 	// }
+	// 	return mmu.cartridge[addr]
 
 	// Cartridge ROM, bank 0
-	case 0x100 <= addr && addr <= 0x3fff:
+	case addr <= 0x3fff:
 		return mmu.cartridge[addr]
 
 	// Cartridge ROM, other banks
 	case 0x4000 <= addr && addr <= 0x7fff:
-		return mmu.cartridge[uint32(addr)+uint32(mmu.currentROMBank-1)<<14]
+		if mmu.cartridgeType == MBC5 {
+			if mmu.currentROMBank == 0 {
+				return mmu.cartridge[addr-0x4000]
+			}
+			return mmu.cartridge[uint32(addr)+(uint32(mmu.hiCurrentROMBank)<<9|uint32(mmu.currentROMBank-1))<<14]
+		} else {
+			return mmu.cartridge[uint32(addr)+uint32(mmu.currentROMBank-1)<<14]
+		}
 
 	// VRAM
 	case 0x8000 <= addr && addr <= 0x9fff:
@@ -169,6 +178,7 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 			}
 			return mmu.ramBanks[(int(addr)-0xa000)+int(mmu.currentRAMBank)*0x2000]
 		}
+		return mmu.ramBanks[(int(addr)-0xa000)+int(mmu.currentRAMBank)*0x2000]
 
 	// CGB Mode only WRAM Bank
 	case 0xd000 <= addr && addr <= 0xdfff:
@@ -187,15 +197,18 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 		return mmu.timer.Read(addr)
 
 	// DMA is read-only
-	case addr == 0xff46:
-		fmt.Println("trying access invalid ff46")
-		return 0xff
+	// case addr == 0xff46:
+	// 	fmt.Println("trying access invalid ff46")
+	// 	return 0xff
 
-	case addr == 0xff4e:
-		fmt.Println("trying access invalid ff4e")
-		return 0xff
+	// case addr == 0xff4e:
+	// 	fmt.Println("trying access invalid ff4e")
+	// 	return 0xff
 
 	case addr == 0xff4c:
+		// fmt.Println
+		mmu.PrintCurrentRomBank()
+		hex.Dump(mmu.cartridge)
 		fmt.Println("trying access invalid ff4c")
 		return 0xff
 
@@ -215,7 +228,8 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 	case addr == 0xff6c:
 		fmt.Println("undocumented area")
 		return 0xfe
-	case 0x72 <= addr && addr <= 0x77:
+
+	case 0xff72 <= addr && addr <= 0xff77:
 		fmt.Println("undocumented area")
 		if addr == 0x75 {
 			return 0x8e
@@ -260,6 +274,7 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 	// CGB Mode only WRAM Bank
 	case 0xd000 <= addr && addr <= 0xdfff:
 		mmu.wramBanks[(int(addr)-0xd000)+int(mmu.svbk-1)*0x1000] = val
+		return
 
 	// OAM
 	case 0xfe00 <= addr && addr <= 0xfe9f:
@@ -278,7 +293,13 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 
 	// CGB Mode prepare speed switch
 	case addr == 0xff4d:
-		mmu.memory[0xff4d] = val & 1
+		mmu.memory[0xff4d] = val
+		// mmu.memory[0xff4d] = mmu.memory[0xff4d]&0xfe | val&1
+		// if val&1 == 1 {
+		// 	mmu.memory[0xff4d] |= 1 << 7
+		// } else {
+		// 	mmu.memory[0xff4d] = 0
+		// }
 		return
 
 	// LCD
@@ -348,10 +369,10 @@ func (mmu *MMU) dmaTransfer(val uint8) {
 }
 
 func (mmu *MMU) hdmaTransfer(val uint8) {
-	fmt.Println("hdma transfer")
+	// fmt.Println("hdma transfer")
 	// The lower 4 bits of the address are ignored
 	src := (uint16(mmu.memory[0xff51])<<8 | uint16(mmu.memory[0xff52])) & 0xfff0
-	dst := (uint16(mmu.memory[0xff53])<<8|uint16(mmu.memory[0xff54]))&0x1ff0 | 0x8000
+	dst := ((uint16(mmu.memory[0xff53])<<8 | uint16(mmu.memory[0xff54])) & 0x1ff0) | 0x8000
 
 	// the lower 7 bits of val specify the length
 	length := (int(val&0x7f) + 1) << 4
@@ -370,6 +391,11 @@ func (mmu *MMU) hdmaTransfer(val uint8) {
 			mmu.Write(dst+uint16(i), mmu.Read(src+uint16(i)))
 		}
 	}
+
+	mmu.memory[0xff51] = uint8(src >> 8)
+	mmu.memory[0xff52] = uint8(src & 0xff)
+	mmu.memory[0xff53] = uint8(src >> 8)
+	mmu.memory[0xff54] = uint8(src & 0xf0)
 
 }
 

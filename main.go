@@ -134,6 +134,10 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("Successfully read %d byte\n", nb)
+	// for i := 0; i < 4096; i++ {
+	// 	fmt.Printf("%#04x\n", buf[uint32(i+0x4000)+uint32(58)<<14])
+	// }
+	// os.Exit(1)
 
 	mmu.Load(buf)
 

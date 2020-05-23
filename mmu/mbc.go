@@ -46,8 +46,28 @@ func (mmu *MMU) changeROMBankMBC3(val uint8) {
 	}
 }
 
+func (mmu *MMU) changeLoROMBankMBC5(val uint8) {
+	mmu.currentROMBank = val
+}
+
+func (mmu *MMU) changeHiROMBankMBC5(val uint8) {
+	if val&1 > 0 {
+		mmu.hiCurrentROMBank = 1
+	} else {
+		mmu.hiCurrentROMBank = 0
+	}
+}
+
 func (mmu *MMU) changeRAMBANK(val uint8) {
 	mmu.currentRAMBank = val & 0x3
+}
+
+func (mmu *MMU) changeRAMBANKMBC3(val uint8) {
+	mmu.currentRAMBank = val & 0x7
+}
+
+func (mmu *MMU) changeRAMBANKMBC5(val uint8) {
+	mmu.currentRAMBank = val & 0xf
 }
 
 func (mmu *MMU) changeBankingMode(val uint8) {
@@ -70,6 +90,12 @@ func (mmu *MMU) handleMBC(addr uint16, val uint8) {
 			mmu.changeLoROMBank(val)
 		} else if mmu.cartridgeType == MBC3 {
 			mmu.changeROMBankMBC3(val)
+		} else if mmu.cartridgeType == MBC5 {
+			if addr <= 0x2fff {
+				mmu.changeLoROMBankMBC5(val)
+			} else if addr <= 0x3fff {
+				mmu.changeHiROMBankMBC5(val)
+			}
 		}
 
 	case addr <= 0x5fff:
@@ -84,11 +110,12 @@ func (mmu *MMU) handleMBC(addr uint16, val uint8) {
 				mmu.rtcEnabled = true
 				mmu.rtc = val
 				return
+			} else if val <= 0x7 {
+				mmu.rtcEnabled = false
+				mmu.changeRAMBANKMBC3(val)
 			}
-			mmu.rtcEnabled = false
-			if val < 4 {
-				mmu.changeRAMBANK(val)
-			}
+		} else if mmu.cartridgeType == MBC5 {
+			mmu.changeRAMBANKMBC5(val)
 		}
 
 	case addr <= 0x7fff:
