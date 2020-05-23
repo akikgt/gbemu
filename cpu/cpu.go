@@ -97,11 +97,11 @@ func (cpu *CPU) Reset() {
 
 func (cpu *CPU) SetCGBMode() {
 	// for CGB
-	cpu.setReg16("AF", 0x11b0)
-	// cpu.setReg16("BC", 0x0000)
-	// cpu.setReg16("DE", 0xff56)
-	// cpu.setReg16("HL", 0x000d)
-	// cpu.setReg16("SP", 0xfffe)
+	cpu.setReg16("AF", 0x1180)
+	cpu.setReg16("BC", 0x0000)
+	cpu.setReg16("DE", 0xff56)
+	cpu.setReg16("HL", 0x000d)
+	cpu.setReg16("SP", 0xfffe)
 }
 
 func (cpu *CPU) Dump() {

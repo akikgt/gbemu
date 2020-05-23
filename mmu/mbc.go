@@ -6,6 +6,7 @@ const (
 	MBC1
 	MBC2
 	MBC3
+	MBC5
 
 	// current bank mode
 	romBankingMode
@@ -19,8 +20,9 @@ func (mmu *MMU) enableRAMBank(val uint8) {
 
 	if val&0xf == 0xa {
 		mmu.ramEnabled = true
-	} else {
+	} else if val == 0 {
 		mmu.ramEnabled = false
+		mmu.rtcEnabled = false
 	}
 }
 
@@ -38,12 +40,10 @@ func (mmu *MMU) changeHiROMBank(val uint8) {
 }
 
 func (mmu *MMU) changeROMBankMBC3(val uint8) {
-	if val&0x7f == 0 {
-		mmu.currentROMBank = 1
-		return
-	}
-
 	mmu.currentROMBank = val & 0x7f
+	if mmu.currentROMBank == 0 {
+		mmu.currentROMBank = 1
+	}
 }
 
 func (mmu *MMU) changeRAMBANK(val uint8) {
@@ -86,7 +86,9 @@ func (mmu *MMU) handleMBC(addr uint16, val uint8) {
 				return
 			}
 			mmu.rtcEnabled = false
-			mmu.changeRAMBANK(val)
+			if val < 4 {
+				mmu.changeRAMBANK(val)
+			}
 		}
 
 	case addr <= 0x7fff:

@@ -62,6 +62,7 @@ func New() *GPU {
 	gpu.ReqLCDInt = false
 
 	gpu.cbpIdx = 0
+	gpu.cobpIdx = 0
 	return gpu
 }
 
@@ -431,14 +432,16 @@ func (gpu *GPU) Read(addr uint16) uint8 {
 		return gpu.wy
 	case 0xff4b:
 		return gpu.wx
+	case 0xff4f:
+		return gpu.vbk
 	case 0xff68:
 		return gpu.cbpIdx
-	// case 0xff69:
-	// 	return 0
+	case 0xff69:
+		return 0
 	case 0xff6a:
 		return gpu.cobpIdx
-		// case 0xff6b:
-		// 	return 0
+	case 0xff6b:
+		return 0
 	}
 
 	fmt.Println("Invalid memory access!")
