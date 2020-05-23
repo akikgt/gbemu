@@ -817,6 +817,18 @@ func (cpu *CPU) STOP() {
 	// TODO: research STOP
 	cpu.stop = true
 
+	key1 := cpu.mmu.Read(0xff4d)
+	if key1&1 > 0 {
+		if key1>>7 > 0 {
+			key1 = 0
+			// normal speed mode
+		} else {
+			key1 = 0x80
+			// double speed mode
+		}
+		cpu.mmu.Write(0xff4d, key1)
+	}
+
 	logger.Log("STOP\n")
 }
 
