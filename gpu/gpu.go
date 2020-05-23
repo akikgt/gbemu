@@ -185,7 +185,7 @@ func (gpu *GPU) renderSprites() {
 			}
 
 			colorNum := gpu.tileSets[tileNum][tileY%8][tileX%8]
-			if gpu.vbk == 1 {
+			if attributes&0x8 > 0 {
 				// CGB Mode only. Use VRAM-Bank 1
 				colorNum = gpu.tileSets2[tileNum][tileY%8][tileX%8]
 			}
@@ -298,7 +298,7 @@ func (gpu *GPU) renderBG() {
 
 		// (y, x) is coordinate in 256 * 256 full background
 		colorNum := gpu.tileSets[tileNum][y%8][x%8]
-		if tileBankNum == 1 {
+		if tileBankNum > 0 {
 			colorNum = gpu.tileSets2[tileNum][y%8][x%8]
 		}
 
@@ -329,11 +329,10 @@ func (gpu *GPU) paintColorPixel(coord int, colorNum uint8, palette uint8, isSpri
 }
 
 func (gpu *GPU) getCGBColor(colorNum, palette uint8, isSprite bool) uint16 {
-	paletteMemory := &gpu.cbgp
 	if isSprite {
-		paletteMemory = &gpu.cobp
+		return uint16(gpu.cobp[palette*8+2*colorNum]) | uint16(gpu.cobp[palette*8+2*colorNum+1])<<8
 	}
-	return uint16(paletteMemory[palette*8+2*colorNum]) | uint16(paletteMemory[palette*8+2*colorNum+1])<<8
+	return uint16(gpu.cbgp[palette*8+2*colorNum]) | uint16(gpu.cbgp[palette*8+2*colorNum+1])<<8
 }
 
 func (gpu *GPU) getRGB(color uint16) (uint8, uint8, uint8) {
@@ -399,6 +398,10 @@ func getMonochrome(color uint8) (uint8, uint8, uint8) {
 
 func (gpu *GPU) Read(addr uint16) uint8 {
 	if 0x8000 <= addr && addr <= 0x9fff {
+		if gpu.stat&0x3 == 3 {
+			return 0xff
+		}
+
 		if gpu.vbk == 1 {
 			return gpu.vram1[addr-0x8000]
 		}
@@ -406,6 +409,10 @@ func (gpu *GPU) Read(addr uint16) uint8 {
 	}
 
 	if 0xfe00 <= addr && addr <= 0xfe9f {
+		mode := gpu.stat & 0x3
+		if mode == 2 || mode == 3 {
+			return 0xff
+		}
 		return gpu.oam[addr-0xfe00]
 	}
 
@@ -452,6 +459,10 @@ func (gpu *GPU) Read(addr uint16) uint8 {
 func (gpu *GPU) Write(addr uint16, val uint8) {
 
 	if 0x8000 <= addr && addr <= 0x9fff {
+		mode := gpu.stat & 0x3
+		if mode == 3 {
+			return
+		}
 		if gpu.vbk == 1 {
 			gpu.vram1[addr-0x8000] = val
 		} else {
@@ -463,8 +474,11 @@ func (gpu *GPU) Write(addr uint16, val uint8) {
 	}
 
 	if 0xfe00 <= addr && addr <= 0xfe9f {
+		mode := gpu.stat & 0x3
+		if mode == 2 || mode == 3 {
+			return
+		}
 		gpu.oam[addr-0xfe00] = val
-
 		return
 	}
 
