@@ -158,6 +158,7 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 	// Cartridge ROM, other banks
 	case 0x4000 <= addr && addr <= 0x7fff:
 		if mmu.cartridgeType == MBC5 {
+			// return mmu.cartridge[uint32(addr)+(uint32(mmu.hiCurrentROMBank)<<9|uint32(mmu.currentROMBank-1))<<14]
 			if mmu.currentROMBank == 0 {
 				return mmu.cartridge[addr-0x4000]
 			}
@@ -183,6 +184,10 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 	// CGB Mode only WRAM Bank
 	case 0xd000 <= addr && addr <= 0xdfff:
 		return mmu.wramBanks[(int(addr)-0xd000)+int(mmu.svbk-1)*0x1000]
+
+	// CGB Mode only WRAM Bank
+	case 0xe000 <= addr && addr <= 0xfdff:
+		return mmu.wramBanks[(int(addr)-0xe000)+int(mmu.svbk-1)*0x1000]
 
 	// OAM
 	case 0xfe00 <= addr && addr <= 0xfe9f:
@@ -392,10 +397,10 @@ func (mmu *MMU) hdmaTransfer(val uint8) {
 		}
 	}
 
-	mmu.memory[0xff51] = uint8(src >> 8)
-	mmu.memory[0xff52] = uint8(src & 0xff)
-	mmu.memory[0xff53] = uint8(src >> 8)
-	mmu.memory[0xff54] = uint8(src & 0xf0)
+	// mmu.memory[0xff51] = uint8(src >> 8)
+	// mmu.memory[0xff52] = uint8(src & 0xff)
+	// mmu.memory[0xff53] = uint8(src >> 8)
+	// mmu.memory[0xff54] = uint8(src & 0xf0)
 
 }
 
@@ -419,4 +424,8 @@ func (mmu *MMU) UpdateIntFlag() {
 		mmu.joypad.ReqJoypadInt = false
 	}
 	mmu.Write(0xff0f, intFlag)
+}
+
+func (mmu *MMU) CallTimer(ticks uint8) {
+	mmu.timer.Update(ticks)
 }

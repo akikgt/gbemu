@@ -108,10 +108,11 @@ func (cpu *CPU) LDr8d8(reg string) {
 // LDmHLd8 put value d8 into address HL
 func (cpu *CPU) LDmHLd8() {
 	n := cpu.Fetch()
-
+	cpu.mmu.CallTimer(4)
 	addr := cpu.getReg16("HL")
 
 	cpu.mmu.Write(addr, n)
+	cpu.mmu.CallTimer(8)
 
 	logger.Log("LD (HL), %#02x\n", n)
 }
@@ -150,8 +151,10 @@ func (cpu *CPU) LDmr16r8(reg1, reg2 string) {
 // LDmd16A put value A into address d16
 func (cpu *CPU) LDmd16A() {
 	addr := cpu.FetchWord()
+	cpu.mmu.CallTimer(8)
 
 	cpu.mmu.Write(addr, cpu.getReg8("A"))
+	cpu.mmu.CallTimer(8)
 
 	logger.Log("LD (%#02x), A\n", addr)
 }
@@ -159,10 +162,12 @@ func (cpu *CPU) LDmd16A() {
 // LDAmd16 put value at address d16 into A
 func (cpu *CPU) LDAmd16() {
 	addr := cpu.FetchWord()
+	cpu.mmu.CallTimer(8)
 
 	val := cpu.mmu.Read(addr)
 
 	cpu.setReg8("A", val)
+	cpu.mmu.CallTimer(8)
 
 	logger.Log("LD A, (%#02x)\n", addr)
 }
@@ -192,10 +197,12 @@ func (cpu *CPU) LDAmC() {
 // LDHAmd8 put value at address 0xff00 + d8 into A
 func (cpu *CPU) LDHAmd8() {
 	addr := 0xff00 + uint16(cpu.Fetch())
+	cpu.mmu.CallTimer(4)
 
 	val := cpu.mmu.Read(addr)
 
 	cpu.setReg8("A", val)
+	cpu.mmu.CallTimer(8)
 
 	logger.Log("LD A, (%#02x)\n", addr)
 }
@@ -203,8 +210,10 @@ func (cpu *CPU) LDHAmd8() {
 // LDHmd8A put value A into address 0xff00 + d8
 func (cpu *CPU) LDHmd8A() {
 	addr := 0xff00 + uint16(cpu.Fetch())
+	cpu.mmu.CallTimer(4)
 
 	cpu.mmu.Write(addr, cpu.getReg8("A"))
+	cpu.mmu.CallTimer(8)
 
 	logger.Log("LD (%#02x), A\n", addr)
 }

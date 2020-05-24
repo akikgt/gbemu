@@ -76,7 +76,7 @@ func (timer *Timer) updateDiv(ticks uint8) {
 	timer.dividerCounter += uint16(ticks)
 
 	if timer.dividerCounter >= 0xff {
-		timer.dividerCounter = 0
+		timer.dividerCounter -= 0xff
 		timer.div++
 	}
 }

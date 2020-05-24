@@ -23,6 +23,7 @@ func (mmu *MMU) enableRAMBank(val uint8) {
 	} else if val == 0 {
 		mmu.ramEnabled = false
 		mmu.rtcEnabled = false
+		mmu.currentRAMBank &= 0x1f
 	}
 }
 
@@ -59,15 +60,15 @@ func (mmu *MMU) changeHiROMBankMBC5(val uint8) {
 }
 
 func (mmu *MMU) changeRAMBANK(val uint8) {
-	mmu.currentRAMBank = val & 0x3
+	mmu.currentRAMBank = val & 0x03
 }
 
 func (mmu *MMU) changeRAMBANKMBC3(val uint8) {
-	mmu.currentRAMBank = val & 0x7
+	mmu.currentRAMBank = val & 0x07
 }
 
 func (mmu *MMU) changeRAMBANKMBC5(val uint8) {
-	mmu.currentRAMBank = val & 0xf
+	mmu.currentRAMBank = val & 0x0f
 }
 
 func (mmu *MMU) changeBankingMode(val uint8) {
@@ -110,7 +111,7 @@ func (mmu *MMU) handleMBC(addr uint16, val uint8) {
 				mmu.rtcEnabled = true
 				mmu.rtc = val
 				return
-			} else if val <= 0x7 {
+			} else {
 				mmu.rtcEnabled = false
 				mmu.changeRAMBANKMBC3(val)
 			}

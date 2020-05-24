@@ -127,6 +127,13 @@ func (gpu *GPU) DisplayTileSets() {
 	}
 }
 
+func (gpu *GPU) DumpColorPalette() {
+	fmt.Println(gpu.cbgp)
+	// for i := 0; i < 40; i++ {
+	// 	fmt.Printf("%04x\n", gpu.cbgp[i])
+	// }
+}
+
 func (gpu *GPU) isWindowEnabled() bool {
 	return gpu.lcdc&0x20 != 0 && gpu.wy <= gpu.ly
 }

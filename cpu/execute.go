@@ -558,6 +558,7 @@ func (cpu *CPU) Execute() uint8 {
 
 	// CB-prefixed
 	case 0xcb:
+		cpu.mmu.CallTimer(4)
 		logger.Log("CB-prefixed\n")
 		cpu.CBPrefixed()
 
@@ -565,9 +566,23 @@ func (cpu *CPU) Execute() uint8 {
 		logger.Log("unknown opcode: %#02x\n", opcode)
 	}
 
-	// add ticks
-	cpu.ticks += ticksTable[opcode]
-	cpu.TotalTicks += uint32(cpu.ticks)
+	if opcode == 0x36 || opcode == 0xe0 || opcode == 0xea {
+		// add ticks
+		cpu.ticks = 0
+		cpu.TotalTicks += uint32(ticksTable[opcode])
+	} else if opcode == 0xf0 || opcode == 0xfa {
+		cpu.ticks = 0
+		// add ticks
+		cpu.TotalTicks += uint32(ticksTable[opcode])
+	} else if opcode == 0xcb {
+		cpu.ticks += ticksTable[opcode]
+		cpu.ticks -= 4
+		cpu.TotalTicks += uint32(cpu.ticks)
+	} else {
+		// add ticks
+		cpu.ticks += ticksTable[opcode]
+		cpu.TotalTicks += uint32(cpu.ticks)
+	}
 
 	return cpu.ticks
 }

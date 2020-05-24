@@ -80,8 +80,17 @@ func update(screen *ebiten.Image) error {
 		gpu.Update(ticks)
 		timer.Update(ticks)
 		cpu.HandleInterrupts()
+		// if cpu.GetPC() == 0x0233 {
+		// 	cpu.SetPC(0x0236)
+		// }
+		// fmt.Printf("%04x\n", cpu.GetPC())
 	}
 
+	// fmt.Printf("%04x\n", cpu.GetPC())
+	// gpu.DisplayTileSets()
+	gpu.DumpColorPalette()
+	// fmt.Printf("%04x\n", cpu.GetPC())
+	// mmu.PrintCurrentRomBank()
 	if ebiten.IsDrawingSkipped() {
 		return nil
 	}

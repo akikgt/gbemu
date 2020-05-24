@@ -104,6 +104,10 @@ func (cpu *CPU) SetCGBMode() {
 	cpu.setReg16("SP", 0xfffe)
 }
 
+func (cpu *CPU) SetPC(addr uint16) {
+	cpu.pc = addr
+}
+
 func (cpu *CPU) Dump() {
 	fmt.Printf("\n")
 	fmt.Println("--------------------")
