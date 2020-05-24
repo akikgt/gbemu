@@ -891,17 +891,11 @@ func (cpu *CPU) EI() {
 // BITbr8 test bit b in register r8
 func (cpu *CPU) BITbr8(b uint8, reg string) {
 	val := cpu.getd8(reg)
-	if reg == "(HL)" {
-		cpu.mmu.CallTimer(4)
-	}
 
 	if testBit(b, val) {
 		cpu.setFlags(RESET, RESET, SET, NA)
 	} else {
 		cpu.setFlags(SET, RESET, SET, NA)
-	}
-	if reg == "(HL)" {
-		cpu.mmu.CallTimer(8)
 	}
 
 	logger.Log("BIT %d, %s\n", b, reg)

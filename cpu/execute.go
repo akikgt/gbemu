@@ -596,7 +596,7 @@ func (cpu *CPU) CBPrefixed() {
 		if 0x40 <= opcode && opcode <= 0x7f {
 			cpu.ticks += 12
 		} else {
-			cpu.ticks += 16
+			cpu.ticks += 4
 		}
 	} else {
 		cpu.ticks += 8
