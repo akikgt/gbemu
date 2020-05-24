@@ -616,6 +616,35 @@ func (cpu *CPU) INCr8(reg string) {
 	logger.Log("INC %s\n", reg)
 }
 
+func (cpu *CPU) INCmHL() {
+	n := cpu.getd8("(HL)")
+	cpu.mmu.CallTimer(4)
+
+	z := checkZero(n + 1)
+	h := checkHalfCarry(n, 1, 0)
+	cpu.setFlags(z, RESET, h, NA)
+
+	cpu.setd8("(HL)", n+1)
+	cpu.mmu.CallTimer(8)
+
+	logger.Log("INC %s\n", "(HL)")
+}
+
+// DECr8 decrement r8
+func (cpu *CPU) DECmHL() {
+	n := cpu.getd8("(HL)")
+	cpu.mmu.CallTimer(4)
+
+	z := checkZero(n - 1)
+	h := checkHalfBorrow(n, 1, 0)
+	cpu.setFlags(z, SET, h, NA)
+
+	cpu.setd8("(HL)", n-1)
+	cpu.mmu.CallTimer(8)
+
+	logger.Log("DEC %s\n", "(HL)")
+}
+
 // DECr8 decrement r8
 func (cpu *CPU) DECr8(reg string) {
 	n := cpu.getd8(reg)
@@ -862,11 +891,17 @@ func (cpu *CPU) EI() {
 // BITbr8 test bit b in register r8
 func (cpu *CPU) BITbr8(b uint8, reg string) {
 	val := cpu.getd8(reg)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(4)
+	}
 
 	if testBit(b, val) {
 		cpu.setFlags(RESET, RESET, SET, NA)
 	} else {
 		cpu.setFlags(SET, RESET, SET, NA)
+	}
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(8)
 	}
 
 	logger.Log("BIT %d, %s\n", b, reg)
@@ -874,14 +909,29 @@ func (cpu *CPU) BITbr8(b uint8, reg string) {
 
 // SETbr8 set bit b in register r8
 func (cpu *CPU) SETbr8(b uint8, reg string) {
-	cpu.setd8(reg, cpu.getd8(reg)|1<<b)
+	val := cpu.getd8(reg) | 1<<b
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(4)
+	}
+	cpu.setd8(reg, val)
 
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(8)
+	}
 	logger.Log("SET %s\n", reg)
 }
 
 // RESbr8 reset bit b in register r8
 func (cpu *CPU) RESbr8(b uint8, reg string) {
-	cpu.setd8(reg, cpu.getd8(reg)&^(1<<b))
+	val := cpu.getd8(reg) &^ (1 << b)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(4)
+	}
+	cpu.setd8(reg, val)
+
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(8)
+	}
 
 	logger.Log("RES %s\n", reg)
 }
@@ -889,6 +939,9 @@ func (cpu *CPU) RESbr8(b uint8, reg string) {
 // SWAPr8 swap upper & lower nibles of r8
 func (cpu *CPU) SWAPr8(reg string) {
 	val := cpu.getd8(reg)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(4)
+	}
 
 	res := val>>4 | val&0x0f<<4
 
@@ -897,6 +950,9 @@ func (cpu *CPU) SWAPr8(reg string) {
 	cpu.setFlags(z, RESET, RESET, RESET)
 
 	cpu.setd8(reg, res)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(8)
+	}
 
 	logger.Log("SWAP %s\n", reg)
 }
@@ -904,6 +960,9 @@ func (cpu *CPU) SWAPr8(reg string) {
 // RLCr8 rotate r8 left. old bit 7 to carry flag
 func (cpu *CPU) RLCr8(reg string) {
 	val := cpu.getd8(reg)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(4)
+	}
 
 	res := val<<1 | val>>7&1
 
@@ -917,6 +976,9 @@ func (cpu *CPU) RLCr8(reg string) {
 	cpu.setFlags(z, RESET, RESET, c)
 
 	cpu.setd8(reg, res)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(8)
+	}
 
 	logger.Log("RLC %s\n", reg)
 }
@@ -924,6 +986,9 @@ func (cpu *CPU) RLCr8(reg string) {
 // RLr8 rotate r8 left through carry flag
 func (cpu *CPU) RLr8(reg string) {
 	val := cpu.getd8(reg)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(4)
+	}
 
 	res := val<<1 | cpu.getFlag(C)
 
@@ -938,12 +1003,19 @@ func (cpu *CPU) RLr8(reg string) {
 
 	cpu.setd8(reg, res)
 
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(8)
+	}
+
 	logger.Log("RL %s\n", reg)
 }
 
 // RRCr8 rotate r8 right. old bit 0 to carry flag
 func (cpu *CPU) RRCr8(reg string) {
 	val := cpu.getd8(reg)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(4)
+	}
 
 	res := val>>1 | (val&1)<<7
 
@@ -957,6 +1029,9 @@ func (cpu *CPU) RRCr8(reg string) {
 	cpu.setFlags(z, RESET, RESET, c)
 
 	cpu.setd8(reg, res)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(8)
+	}
 
 	logger.Log("RR %s\n", reg)
 }
@@ -964,6 +1039,9 @@ func (cpu *CPU) RRCr8(reg string) {
 // RRr8 rotate r8 right through carry flag
 func (cpu *CPU) RRr8(reg string) {
 	val := cpu.getd8(reg)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(4)
+	}
 
 	res := val>>1 | cpu.getFlag(C)<<7
 
@@ -977,6 +1055,9 @@ func (cpu *CPU) RRr8(reg string) {
 	cpu.setFlags(z, RESET, RESET, c)
 
 	cpu.setd8(reg, res)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(8)
+	}
 
 	logger.Log("RR %s\n", reg)
 }
@@ -984,6 +1065,9 @@ func (cpu *CPU) RRr8(reg string) {
 // SLAr8 shift r8 left into carry. LSB of r8 set to 0
 func (cpu *CPU) SLAr8(reg string) {
 	val := cpu.getd8(reg)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(4)
+	}
 
 	res := val << 1
 
@@ -997,6 +1081,9 @@ func (cpu *CPU) SLAr8(reg string) {
 	cpu.setFlags(z, RESET, RESET, c)
 
 	cpu.setd8(reg, res)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(8)
+	}
 
 	logger.Log("SLA %s\n", reg)
 }
@@ -1004,6 +1091,9 @@ func (cpu *CPU) SLAr8(reg string) {
 // SRAr8 shift r8 right into carry. MSB doesn't change.
 func (cpu *CPU) SRAr8(reg string) {
 	val := cpu.getd8(reg)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(4)
+	}
 
 	res := val>>1 | val&0x80
 
@@ -1017,6 +1107,9 @@ func (cpu *CPU) SRAr8(reg string) {
 	cpu.setFlags(z, RESET, RESET, c)
 
 	cpu.setd8(reg, res)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(8)
+	}
 
 	logger.Log("SRA %s\n", reg)
 }
@@ -1024,6 +1117,9 @@ func (cpu *CPU) SRAr8(reg string) {
 // SRLr8 shift r8 right into carry. MSB set to 0
 func (cpu *CPU) SRLr8(reg string) {
 	val := cpu.getd8(reg)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(4)
+	}
 
 	res := (val >> 1) & 0x7f
 
@@ -1037,6 +1133,9 @@ func (cpu *CPU) SRLr8(reg string) {
 	cpu.setFlags(z, RESET, RESET, c)
 
 	cpu.setd8(reg, res)
+	if reg == "(HL)" {
+		cpu.mmu.CallTimer(8)
+	}
 
 	logger.Log("SRA %s\n", reg)
 }

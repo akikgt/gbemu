@@ -88,7 +88,6 @@ func update(screen *ebiten.Image) error {
 
 	// fmt.Printf("%04x\n", cpu.GetPC())
 	// gpu.DisplayTileSets()
-	gpu.DumpColorPalette()
 	// fmt.Printf("%04x\n", cpu.GetPC())
 	// mmu.PrintCurrentRomBank()
 	if ebiten.IsDrawingSkipped() {

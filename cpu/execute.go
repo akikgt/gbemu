@@ -411,7 +411,7 @@ func (cpu *CPU) Execute() uint8 {
 	case 0x2c:
 		cpu.INCr8("L")
 	case 0x34:
-		cpu.INCr8("(HL)")
+		cpu.INCmHL()
 
 	// DEC n
 	case 0x3d:
@@ -429,7 +429,7 @@ func (cpu *CPU) Execute() uint8 {
 	case 0x2d:
 		cpu.DECr8("L")
 	case 0x35:
-		cpu.DECr8("(HL)")
+		cpu.DECmHL()
 
 	// CP n
 	case 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf:
@@ -566,7 +566,7 @@ func (cpu *CPU) Execute() uint8 {
 		logger.Log("unknown opcode: %#02x\n", opcode)
 	}
 
-	if opcode == 0x36 || opcode == 0xe0 || opcode == 0xea {
+	if (0x34 <= opcode && opcode <= 0x36) || opcode == 0xe0 || opcode == 0xea {
 		// add ticks
 		cpu.ticks = 0
 		cpu.TotalTicks += uint32(ticksTable[opcode])
