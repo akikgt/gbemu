@@ -566,20 +566,14 @@ func (cpu *CPU) Execute() uint8 {
 		logger.Log("unknown opcode: %#02x\n", opcode)
 	}
 
-	if (0x34 <= opcode && opcode <= 0x36) || opcode == 0xe0 || opcode == 0xea {
-		// add ticks
+	// add ticks
+	if (0x34 <= opcode && opcode <= 0x36) || opcode == 0xe0 || opcode == 0xea || opcode == 0xf0 || opcode == 0xfa {
 		cpu.ticks = 0
-		cpu.TotalTicks += uint32(ticksTable[opcode])
-	} else if opcode == 0xf0 || opcode == 0xfa {
-		cpu.ticks = 0
-		// add ticks
 		cpu.TotalTicks += uint32(ticksTable[opcode])
 	} else if opcode == 0xcb {
 		cpu.ticks += ticksTable[opcode]
-		cpu.ticks -= 4
 		cpu.TotalTicks += uint32(cpu.ticks)
 	} else {
-		// add ticks
 		cpu.ticks += ticksTable[opcode]
 		cpu.TotalTicks += uint32(cpu.ticks)
 	}
@@ -594,12 +588,10 @@ func (cpu *CPU) CBPrefixed() {
 
 	if reg == "(HL)" {
 		if 0x40 <= opcode && opcode <= 0x7f {
-			cpu.ticks += 12
-		} else {
-			cpu.ticks += 4
+			cpu.ticks += 8
 		}
 	} else {
-		cpu.ticks += 8
+		cpu.ticks += 4
 	}
 
 	switch {
