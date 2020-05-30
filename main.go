@@ -12,6 +12,7 @@ import (
 	"os"
 
 	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/ebitenutil"
 )
 
 func debugMode(cpu *c.CPU, breakPoint *uint16) bool {
@@ -80,16 +81,8 @@ func update(screen *ebiten.Image) error {
 		gpu.Update(ticks)
 		timer.Update(ticks)
 		cpu.HandleInterrupts()
-		// if cpu.GetPC() == 0x0233 {
-		// 	cpu.SetPC(0x0236)
-		// }
-		// fmt.Printf("%04x\n", cpu.GetPC())
 	}
 
-	// fmt.Printf("%04x\n", cpu.GetPC())
-	// gpu.DisplayTileSets()
-	// fmt.Printf("%04x\n", cpu.GetPC())
-	// mmu.PrintCurrentRomBank()
 	if ebiten.IsDrawingSkipped() {
 		return nil
 	}
@@ -97,8 +90,8 @@ func update(screen *ebiten.Image) error {
 	screen.ReplacePixels(gpu.Pixels)
 
 	// for debug, TPS, FPS
-	// msg := fmt.Sprintf("TPS = %0.2f\nFPS = %0.2f", ebiten.CurrentTPS(), ebiten.CurrentFPS())
-	// ebitenutil.DebugPrint(screen, msg)
+	msg := fmt.Sprintf("TPS = %0.2f\nFPS = %0.2f", ebiten.CurrentTPS(), ebiten.CurrentFPS())
+	ebitenutil.DebugPrint(screen, msg)
 
 	// joypad
 	if ebiten.IsKeyPressed(ebiten.KeyJ) {
@@ -142,10 +135,6 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("Successfully read %d byte\n", nb)
-	// for i := 0; i < 4096; i++ {
-	// 	fmt.Printf("%#04x\n", buf[uint32(i+0x4000)+uint32(58)<<14])
-	// }
-	// os.Exit(1)
 
 	mmu.Load(buf)
 

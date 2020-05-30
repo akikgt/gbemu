@@ -145,12 +145,6 @@ func (mmu *MMU) getCartridgeType() uint8 {
 
 func (mmu *MMU) Read(addr uint16) uint8 {
 	switch {
-	// case addr < 0x100:
-	// 	// if mmu.IsBooting {
-	// 	// 	return mmu.bios[addr]
-	// 	// }
-	// 	return mmu.cartridge[addr]
-
 	// Cartridge ROM, bank 0
 	case addr <= 0x3fff:
 		return mmu.cartridge[addr]
@@ -201,15 +195,6 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 	case 0xff04 <= addr && addr <= 0xff07:
 		return mmu.timer.Read(addr)
 
-	// DMA is read-only
-	// case addr == 0xff46:
-	// 	fmt.Println("trying access invalid ff46")
-	// 	return 0xff
-
-	// case addr == 0xff4e:
-	// 	fmt.Println("trying access invalid ff4e")
-	// 	return 0xff
-
 	case addr == 0xff4c:
 		// fmt.Println
 		mmu.PrintCurrentRomBank()
@@ -242,14 +227,10 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 		return 0x00
 
 	case addr == 0xff70:
-		// fmt.Println("read WRAM bank number")
 		return mmu.svbk
 
 	}
 
-	// if addr != 0xffff && addr != 0xff0f {
-	// 	fmt.Printf("%#04x\n", addr)
-	// }
 	return mmu.memory[addr]
 }
 
@@ -299,12 +280,7 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 	// CGB Mode prepare speed switch
 	case addr == 0xff4d:
 		mmu.memory[0xff4d] = val
-		// mmu.memory[0xff4d] = mmu.memory[0xff4d]&0xfe | val&1
-		// if val&1 == 1 {
-		// 	mmu.memory[0xff4d] |= 1 << 7
-		// } else {
-		// 	mmu.memory[0xff4d] = 0
-		// }
+		// TODO: double speed mode
 		return
 
 	// LCD
@@ -319,7 +295,6 @@ func (mmu *MMU) Write(addr uint16, val uint8) {
 	// LCD VRAM DMA Transfers for CGB mode
 	case 0xff51 <= addr && addr <= 0xff55:
 		if addr == 0xff55 {
-			// start the transfer
 			mmu.hdmaTransfer(val)
 			return
 		}
@@ -396,12 +371,6 @@ func (mmu *MMU) hdmaTransfer(val uint8) {
 			mmu.Write(dst+uint16(i), mmu.Read(src+uint16(i)))
 		}
 	}
-
-	// mmu.memory[0xff51] = uint8(src >> 8)
-	// mmu.memory[0xff52] = uint8(src & 0xff)
-	// mmu.memory[0xff53] = uint8(src >> 8)
-	// mmu.memory[0xff54] = uint8(src & 0xf0)
-
 }
 
 func (mmu *MMU) UpdateIntFlag() {
